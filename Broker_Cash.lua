@@ -1,227 +1,346 @@
 
 local addon = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
+local L     = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
 
 local libDataBroker = LibStub('LibDataBroker-1.1')
 local libQTip       = LibStub('LibQTip-1.0')
 
-local FIRST_DAY_OF_WEEK = 2	-- Lundi
+local FIRST_DAY_OF_WEEK  = 2	-- Lundi par défaut
 
-local C_RED    = RED_FONT_COLOR_CODE
-local C_GREEN  = GREEN_FONT_COLOR_CODE
-local C_YELLOW = YELLOW_FONT_COLOR_CODE
-local C_END    = FONT_COLOR_CODE_CLOSE
+local GOLD_ICON_STRING   = '|TInterface\\MoneyFrame\\UI-GoldIcon:14:14:2:0|t'
+local SILVER_ICON_STRING = '|TInterface\\MoneyFrame\\UI-SilverIcon:14:14:2:0|t'
+local COPPER_ICON_STRING = '|TInterface\\MoneyFrame\\UI-CopperIcon:14:14:2:0|t'
+
+local SILVER_PER_GOLD    = _G.SILVER_PER_GOLD
+local COPPER_PER_SILVER  = _G.COPPER_PER_SILVER
+local COPPER_PER_GOLD    = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
+
+local COLOR_RED          = RED_FONT_COLOR_CODE
+local COLOR_GREEN        = GREEN_FONT_COLOR_CODE
+local COLOR_YELLOW       = YELLOW_FONT_COLOR_CODE
+local COLOR_END          = FONT_COLOR_CODE_CLOSE
 
 -------------------------------------------------------------------------------
 local defaults = {
 	global = {
-		showDay = true,
-		showWeek = true,
+		firstDoW  = FIRST_DAY_OF_WEEK,
+		showDay   = true,
+		showWeek  = true,
 		showMonth = true,
-		showYear = true
+		showYear  = true
+	},
+	char = {
+		money     = -1,
+		since     = 0,
+		lastSaved = 0,
+		day       = 0,
+		week      = 0,
+		month     = 0,
+		year      = 0
 	}
 }
+
+-------------------------------------------------------------------------------
+local function GetCoinTextureString(money)
+
+	local gold   = math.floor(money / COPPER_PER_GOLD)
+	local silver = math.floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = money % COPPER_PER_SILVER
+
+	return string.format('%s %02d%s %02d%s', gold > 0 and BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING or '',
+	                                         silver, SILVER_ICON_STRING,
+										     copper, COPPER_ICON_STRING)
+end
+
+local function GetMoneyVariationString(money)
+	if money == 0 then
+		return COLOR_YELLOW .. '--' .. COLOR_END
+	elseif money < 0 then
+		return COLOR_RED .. '-' .. GetCoinTextureString(-money) .. COLOR_END
+	else
+		return COLOR_GREEN .. '+' .. GetCoinTextureString(money) .. COLOR_END
+	end
+end
 
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
 
 	-- Royaume et perso courants
-	self.realmName = GetRealmName()
-	self.toonName  = UnitName('player')
+	self.charRealm = GetRealmName()
+	self.charName  = UnitName('player')
+	self.session   = 0
 
 	-- Charge ou crée les données sauvegardées
-	self.db = LibStub('AceDB-3.0'):New('Broker_Cash_DB', defaults, true)
+	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', defaults, true)
+	self.db.char.since = self.db.char.since		-- S'assure que les tables AceDB sont initialisées
+												-- si c'est la première fois qu'on charge ce personnage
+
+	-- Recense les royaumes et les personnages connus
+	self.sortedRealms = {}
+	self.sortedChars  = {}
+	do
+		local h = {}
+		for charKey,_ in pairs(rawget(Broker_CashDB, 'char')) do
+			local charName, _, charRealm = strsplit(' ', charKey, 3)	-- strsplit(' - ', charKey) ne fonctionne pas
+
+			-- Nom du royaume (unique)
+			if not h[charRealm] then
+				h[charRealm] = true
+				table.insert(self.sortedRealms, charRealm)
+			end
+
+			-- Nom du personnage
+			self.sortedChars[charRealm] = self.sortedChars[charRealm] or {}
+			table.insert(self.sortedChars[charRealm], charName)
+		end
+
+		-- Trie les royaumes par ordre alphabétique, le royaume courant en premier
+		table.sort(self.sortedRealms, function(r1, r2)
+			if r1 == addon.charRealm then
+				return true
+			elseif r2 == addon.charRealm then
+				return false
+			else
+				return r1 < r2
+			end
+		end)
+	end
 
 	-- Crée l'icône LDB
 	self.dataObject = libDataBroker:NewDataObject('Broker_Cash', {
 		type    = 'data source',
 		icon    = 'Interface\\MoneyFrame\\UI-SilverIcon',
 		text    = 'Cash',
-		OnEnter = function(f) addon:ShowTooltip(f) end
+		OnEnter = function(f) addon:ShowMainTooltip(f) end
 	})
 end
 
 -------------------------------------------------------------------------------
 function addon:OnEnable()
 
-	-- Nouveau perso ?
-	if not self.db.realm[self.toonName] then
-		local now = time()
-		self.db.realm[self.toonName] = {
-			since     = now,
-			lastSaved = now,
-			total     = GetMoney(),
-			session   = 0,
-			day       = 0,
-			week      = 0,
-			month     = 0,
-			year      = 0
-		}
+	-- Première connexion avec ce perso ?
+	if self.db.char.money == -1 then
+		self.db.char.money     = GetMoney()
+		self.db.char.since     = time()
+		self.db.char.lastSaved = time()
 	end
-	self.toonData = self.db.realm[self.toonName]
 
-	-- Vérifie s'il faut réinitialiser les données
-	self:CheckResets(true)
+	-- Sauve les données actuelles
+	-- (fait ici car l'addon peut être activé/désactivé à tout moment)
+	self:PLAYER_MONEY()
 
 	-- Surveille les événements
 	self:RegisterEvent('PLAYER_MONEY')
-	self:RegisterEvent('PLAYER_LOGOUT')
 end
 
 function addon:OnDisable()
+
+	-- Ferme et libère les deux tooltips
+	if self.subTooltip then
+		libQTip:Release(self.subTooltip)
+		self.subTooltip = nil
+	end
+
+	if self.mainTooltip then
+		libQTip:Release(self.mainTooltip)
+		self.mainTooltip = nil
+	end
 end
 
 -------------------------------------------------------------------------------
 function addon:PLAYER_MONEY()
 
-	-- Vérifie s'il faut réinitialiser les données
-	self:CheckResets()
+	-- Vérifie s'il faut réinitialiser les statistiques
+	self:CheckStatResets(self.db.char)
 
 	-- Enregistre la dépense / recette
-	local total = GetMoney()
-	local diff  = total - self.toonData.total
+	local money = GetMoney()
+	local diff  = money - self.db.char.money
 
-	self.toonData.total     = total
-	self.toonData.session   = self.toonData.session + diff
-	self.toonData.day       = self.toonData.day     + diff
-	self.toonData.week      = self.toonData.week    + diff
-	self.toonData.month     = self.toonData.month   + diff
-	self.toonData.year      = self.toonData.year    + diff
-	self.toonData.lastSaved = time()
+	-- Met à jour la stat de session
+	self.session = self.session + diff
+
+	-- Et les stats quotidienne/habdomadaire/mensuelle/annuelle
+	self.db.char.money     = money
+	self.db.char.day       = self.db.char.day   + diff
+	self.db.char.week      = self.db.char.week  + diff
+	self.db.char.month     = self.db.char.month + diff
+	self.db.char.year      = self.db.char.year  + diff
+	self.db.char.lastSaved = time()
 end
 
 -------------------------------------------------------------------------------
-function addon:PLAYER_LOGOUT()
-	-- Petit nettoyage
-	self.toonData.session = nil
+function addon:CheckStatResets(charData)
+
+	-- Calcule les dates de réinitialisation des statistiques
+	self:CalcResetDates()
+
+	-- Réinitialise à 0 les stats qui ont dépassé leur date limite
+	local charLastSaved = charData.lastSaved or 0
+	charData.day   = (charData.day   and charLastSaved >= self.startOfDay)   and charData.day   or 0	-- Quotidienne
+	charData.week  = (charData.week  and charLastSaved >= self.startOfWeek)  and charData.week  or 0 	-- Hebdomadaire
+	charData.month = (charData.month and charLastSaved >= self.startOfMonth) and charData.month or 0 	-- Mensuelle
+	charData.year  = (charData.year  and charLastSaved >= self.startOfYear)  and charData.year  or 0 	-- Annuelle
 end
 
 -------------------------------------------------------------------------------
-function addon:CheckResets(isOnLoad)
+function addon:CalcResetDates()
 
-	-- Pas besoin de recalculer si on n'a pas changé de jour
+	-- On recalcule seulement si on a changé de jour
+	-- depuis le dernier appel à la fonction
 	local today = date('*t')
-	if (self.currDay or 0) == today.yday then return end
-	self.currDay = today.yday
+	if (self.yday or 0) == today.yday then return end
+	self.yday = today.yday
 
-	local temp = { hour = 0, min = 0, sec = 0 }
+	-- Toutes les limites sont calculées à 00:00:00
+	local limit = {
+		hour  = 0,
+		min   = 0,
+		sec   = 0
+	}
 
-	-- 1/ Réinitialise les données sur la session à chaque démarrage ou /reload
-	if isOnLoad then
-		self.toonData.session = 0
-	end
+	-- Début du jour courant
+	limit.day   = today.day
+	limit.month = today.month
+	limit.year  = today.year
+	self.startOfDay = time(limit)
 
-	-- 2/ Réinitialise le montant du jour si on a changé de jour
-	--    ou si on n'a pas actualisé depuis plus d'un jour
-	temp.day   = today.day
-	temp.month = today.month
-	temp.year  = today.year
-	local startOfDay = time(temp)
-
-	if self.toonData.lastSaved < startOfDay then
-		self.toonData.day = 0
-	end
-
-	-- 3/ Réinitialise le montant de la semaine en début de semaine
-	--    ou si on n'a pas actualisé depuis plus d'une semaine
-	temp.day   = today.day - today.wday + FIRST_DAY_OF_WEEK
-	temp.month = today.month
-	temp.year  = today.year
-	if (temp.day < 1) then
-		temp.day = 1
-		temp.month = temp.month - 1
-		if temp.month < 1 then
-			temp.month = 1
-			temp.year = temp.year - 1
+	-- Début de la semaine courante
+	limit.day   = today.day - today.wday + self.db.global.firstDoW
+	limit.month = today.month
+	limit.year  = today.year
+	if (limit.day < 1) then
+		limit.day = 1
+		limit.month = limit.month - 1
+		if limit.month < 1 then
+			limit.month = 1
+			limit.year = limit.year - 1
 		end
 	end
-	local startOfWeek = time(temp)
+	self.startOfWeek = time(limit)
 
-	if today.wday == FIRST_DAY_OF_WEEK or self.toonData.lastSaved < startOfWeek then
-		self.toonData.week = 0
-	end
+	-- Début du mois courant
+	limit.day   = 1
+	limit.month = today.month
+	limit.year  = today.year
+	self.startOfMonth = time(limit)
 
-	-- 4/ Réinitialise le montant du mois en début de mois
-	--    ou si on n'a pas actualisé depuis plus d'un mois
-	temp.day   = 1
-	temp.month = today.month
-	temp.year  = today.year
-	local startOfMonth = time(temp)
-
-	if today.day == 1 or self.toonData.lastSaved < startOfMonth then
-		self.toonData.month = 0
-	end
-
-	-- 5/ Réinitialise le montant de l'année en début d'année
-	--  ou si on n'a pas actualisé depuis plus d'une année
-	temp.day   = 1
-	temp.month = 1
-	temp.year  = today.year
-	local startOfYear = time(temp)
-
-	if (today.day == 1 and today.month == 1) or self.toonData.lastSaved < startOfYear then
-		self.toonData.year = 0
-	end
+	-- Début de l'année courante
+	limit.day   = 1
+	limit.month = 1
+	limit.year  = today.year
+	self.startOfYear = time(limit)
 end
 
 -------------------------------------------------------------------------------
-function addon:ShowTooltip(LDBFrame)
+function addon:ShowMainTooltip(LDBFrame)
 
-	self:CheckResets()
+	if self.mainTooltip and self.mainTooltip:IsShown() then return end
 
-	-- Prépare les données
-	local function color(n)
-		if n < 0 then
-			return C_RED .. n .. C_END
-		elseif n > 0 then
-			return C_GREEN .. '+' .. n .. C_END
-		else
-			return C_YELLOW .. n .. C_END
-		end
-	end
-
-	local toons, sorted, total = rawget(Broker_Cash_DB, 'realm')[self.realmName], {}, 0
-	for name, data in pairs(toons) do
-		table.insert(sorted, { name,				-- Col 1
-		                       color(data.session),	-- Col 2
-		                       color(data.day),		-- Col 3
-							   color(data.week),	-- Col 4
-							   color(data.month),	-- COl 5
-							   color(data.year),	-- Col 6
-							   data.total			-- Col 7
-							})
-		total = total + data.total
-	end
-
-	-- Trie par ordre décroissant de la richesse
-	local function cmp(a, b)
-		return a[7] > b[7]
-	end
-	table.sort(sorted, cmp)
-
-	-- Affiche le tooltip
-	self.tooltip = libQTip:Acquire('Broker_Cash', 7, 'LEFT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT', 'RIGHT')
-	self.tooltip:SmartAnchorTo(LDBFrame)
-	self.tooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon.tooltip = nil end)
-
-	self.tooltip:Clear()
-	self.tooltip:SetCellMarginH(4)
+	-- Prépare le tooltip
+	self.mainTooltip = libQTip:Acquire('BrokerCash_MainTooltip', 2, 'LEFT', 'RIGHT')
+	self.mainTooltip:SmartAnchorTo(LDBFrame)
+	self.mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
+	-- self.mainTooltip.OnRelease = function() addon.mainTooltip = nil end,
+	self.mainTooltip:Clear()
+	self.mainTooltip:SetCellMarginH(4)
 
 	-- Header
-	local ln = self.tooltip:AddHeader('Nom', 'Session', 'Jour', 'Semaine', 'Mois', 'Année', 'Total')
-	self.tooltip:AddSeparator()
+	self.mainTooltip:AddHeader(L['Name'], L['Cash'])
+	self.mainTooltip:AddSeparator()
 
-	-- Personnages de ce royaume
-	for k,v in ipairs(sorted) do
-		ln = self.tooltip:AddLine(unpack(v))
+	-- Prépare les données. Obligé de le faire ici dynamiquement
+	-- car les stats des persos peuvent changer à tout moment
+	local charsDB, realmMoney, totalMoney = rawget(Broker_CashDB, 'char'), 0, 0
 
-		if v[1] == self.toonName then
-			self.tooltip:SetLineColor(ln, 1, 1, 0, 0.25)
-			self.tooltip:SetLineTextColor(ln, 1, 1, 0, 1)
+	-- Liste tous les personnages, par ordre des royaumes triés au début
+	local rln, ln
+	for _,realm in ipairs(self.sortedRealms) do
+		self.mainTooltip:AddLine(' ', ' ')					-- Ligne vide
+		rln = self.mainTooltip:AddLine(realm)				-- Nom du royaume
+		self.mainTooltip:SetLineTextColor(rln, 1, 1, 0, 1)	-- (en jaune)
+
+		-- Trie les personnages de ce royaume par ordre de richesse décroissante
+		table.sort(self.sortedChars[realm], function(c1, c2)
+			return charsDB[c1 .. ' - ' .. realm].money > charsDB[c2 .. ' - ' .. realm].money
+		end)
+
+		-- Et les ajoute au tooltip
+		realmMoney = 0
+		for _,name in ipairs(self.sortedChars[realm]) do
+			local charKey = name .. ' - ' .. realm
+
+			-- Vérifie s'il faut réinitialiser les statistiques de ce personnage
+			local charData = charsDB[charKey]
+			self:CheckStatResets(charData)
+
+			-- Ajoute le personnage
+			ln = self.mainTooltip:AddLine()
+			self.mainTooltip:SetCell(ln, 1, name, nil, nil, nil, nil, 10)
+			self.mainTooltip:SetCell(ln, 2, GetCoinTextureString(charData.money))
+
+			-- Gestion du second tooltip pour cette ligne
+			self.mainTooltip:SetLineScript(ln, 'OnEnter', function(lineFrame, charKey) addon:ShowSubTooltip(lineFrame, charKey) end, charKey)
+			self.mainTooltip:SetLineScript(ln, 'OnLeave', function() addon:HideSubTooltip() end)
+
+			-- Surligne la ligne si c'est le perso courant
+			if realm == self.charRealm and name == self.charName then
+				self.mainTooltip:SetLineColor(ln, 1, 1, 0, 0.25)
+				-- self.mainTooltip:SetLineTextColor(ln, 1, 1, 0, 1)
+			end
+
+			-- Comptabilise la richesse par royaume / totale
+			realmMoney = realmMoney + charData.money
+			totalMoney = totalMoney + charData.money
 		end
+
+		-- Ajoute le total du royaume à côté de son nom
+		self.mainTooltip:SetCell(rln, 2, GetCoinTextureString(realmMoney))
 	end
 
-	self.tooltip:AddSeparator()
-	self.tooltip:AddLine('Total', '', '', '', '', '', total)
+	-- Ajoute le grand total
+	self.mainTooltip:AddLine(' ')
+	self.mainTooltip:AddSeparator()
+	self.mainTooltip:AddLine('Total', GetCoinTextureString(totalMoney))
 
-	self.tooltip:Show()
+	self.mainTooltip:Show()
+end
+
+function addon:HideMainTooltip()
+
+	self:HideSubTooltip()
+	if self.mainTooltip then
+		self.mainTooltip:Release()
+	end
+	self.mainTooltip = nil
+end
+
+-------------------------------------------------------------------------------
+function addon:ShowSubTooltip(mainTooltipLine, charKey)
+
+	-- Affiche (ou déplace) le sous-tooltip
+	if not self.subTooltip then
+		self.subTooltip = libQTip:Acquire('BrokerCash_SubTooltip', 2, 'LEFT', 'RIGHT')
+		self.subTooltip:SetFrameLevel(self.mainTooltip:GetFrameLevel() + 1)
+	end
+
+	self.subTooltip:SetPoint('TOPLEFT', mainTooltipLine, 'TOPRIGHT', 0, 10)
+	self.subTooltip:Clear()
+	self.subTooltip:SetCellMarginH(10)
+
+	-- Affiche les données du personnage
+	local charData = rawget(Broker_CashDB, 'char')[charKey]
+	self.subTooltip:AddLine(L['Day'],   GetMoneyVariationString(charData.day))
+	self.subTooltip:AddLine(L['Week'],  GetMoneyVariationString(charData.week))
+	self.subTooltip:AddLine(L['Month'], GetMoneyVariationString(charData.month))
+	self.subTooltip:AddLine(L['Year'],  GetMoneyVariationString(charData.year))
+	self.subTooltip:Show()
+end
+
+function addon:HideSubTooltip()
+
+	if self.subTooltip then
+		self.subTooltip:Release()
+	end
+	self.subTooltip = nil
 end

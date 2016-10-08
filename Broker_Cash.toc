@@ -1,11 +1,11 @@
 ## Interface: 70000
-## Title: Broker_Cash
+## Title: Broker: Cash
 ## Notes: Keep track of your gold incomes and outcomes
 ## Version: 1.1.70000
 ## Author: Septh
 ## OptionalDeps: !Swatter
 
-## SavedVariables: Broker_Cash_DB
+## SavedVariables: Broker_CashDB
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
@@ -22,4 +22,6 @@ libs\AceLocale-3.0\AceLocale-3.0.xml
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibQTip-1.0\LibQTip-1.0.lua
 
+locales/en.lua
+locales/fr.lua
 Broker_Cash.lua

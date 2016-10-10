@@ -11,11 +11,12 @@ L['Total'] = 'Total'
 L['Since'] = '> Suivi depuis %s'
 L['LastSaved'] = '> Dernier relevé %s'
 L['DateFormat'] = 'le %d/%m/%Y'
+L['DateTimeFormat'] = 'le %d/%m/%Y à %X'
 L['Day'] = 'Aujourd\'hui'
 L['Week'] = 'Cette semaine'
 L['Month'] = 'Ce mois'
 L['Year'] = 'Cette année'
 
 -- Other
-L['Session'] = 'Session'
+L['Session'] = 'Session courante'
 L['NoStat'] = 'N/A'

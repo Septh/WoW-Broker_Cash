@@ -11,11 +11,12 @@ L['Total'] = true
 L['Since'] = '> Recorded since %s'
 L['LastSaved'] = '> Last seen on %s'
 L['DateFormat'] = '%x'
+L['DateTimeFormat'] = '%x, %X'
 L['Day'] = 'Today'
 L['Week'] = 'This week'
 L['Month'] = 'This month'
 L['Year'] = 'This year'
 
 -- Other
-L['Session'] = true
+L['Session'] = 'Current session'
 L['NoStat'] = 'N/A'

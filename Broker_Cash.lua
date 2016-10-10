@@ -7,27 +7,30 @@ local libQTip       = LibStub('LibQTip-1.0')
 
 local FIRST_DAY_OF_WEEK  = 2	-- Lundi par défaut
 
-local GOLD_ICON_STRING   = '|TInterface\\MoneyFrame\\UI-GoldIcon:14:14:2:0|t'
-local SILVER_ICON_STRING = '|TInterface\\MoneyFrame\\UI-SilverIcon:14:14:2:0|t'
-local COPPER_ICON_STRING = '|TInterface\\MoneyFrame\\UI-CopperIcon:14:14:2:0|t'
+local GOLD_ICON_STRING    = ('|TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:2:0|t'):format(select(2, GameTooltipText:GetFontObject():GetFont()))
+local SILVER_ICON_STRING  = ('|TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:2:0|t'):format(select(2, GameTooltipText:GetFontObject():GetFont()))
+local COPPER_ICON_STRING  = ('|TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:2:0|t'):format(select(2, GameTooltipText:GetFontObject():GetFont()))
 
-local SILVER_PER_GOLD    = _G.SILVER_PER_GOLD
-local COPPER_PER_SILVER  = _G.COPPER_PER_SILVER
-local COPPER_PER_GOLD    = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
+local SILVER_PER_GOLD     = _G.SILVER_PER_GOLD
+local COPPER_PER_SILVER   = _G.COPPER_PER_SILVER
+local COPPER_PER_GOLD     = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
 
-local COLOR_RED          = RED_FONT_COLOR_CODE
-local COLOR_GREEN        = GREEN_FONT_COLOR_CODE
-local COLOR_YELLOW       = YELLOW_FONT_COLOR_CODE
-local COLOR_END          = FONT_COLOR_CODE_CLOSE
+local COLOR_RED           = CreateColor(1.0, 0.1, 0.1, 1)
+local COLOR_RED_DIMMED    = CreateColor(0.8, 0.1, 0.1, 1)
+local COLOR_GREEN         = CreateColor(0.1, 1.0, 0.1, 1)
+local COLOR_GREEN_DIMMED  = CreateColor(0.1, 0.8, 0.1, 1)
+local COLOR_YELLOW        = CreateColor(1.0, 1.0, 0.1, 1)
+local COLOR_YELLOW_DIMMED = CreateColor(0.8, 0.8, 0.1, 1)
 
 -------------------------------------------------------------------------------
 local defaults = {
 	global = {
 		firstDoW  = FIRST_DAY_OF_WEEK,
-		showDay   = true,
-		showWeek  = true,
-		showMonth = true,
-		showYear  = true
+		showSession = false,
+		showDay     = true,
+		showWeek    = true,
+		showMonth   = true,
+		showYear    = true
 	},
 	char = {
 		money     = -1,
@@ -41,7 +44,7 @@ local defaults = {
 }
 
 -------------------------------------------------------------------------------
-local function GetCoinTextureString(money)
+local function GetMoneyTextureString(money)
 
 	local gold   = math.floor(money / COPPER_PER_GOLD)
 	local silver = math.floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
@@ -57,13 +60,13 @@ local function GetCoinTextureString(money)
 	return str
 end
 
-local function GetMoneyVariationString(money)
+local function GetVariationTextureString(money)
 	if money == 0 then
-		return COLOR_YELLOW .. '0' .. COLOR_END
+		return COLOR_YELLOW_DIMMED:WrapTextInColorCode('0')
 	elseif money < 0 then
-		return COLOR_RED .. '-' .. GetCoinTextureString(-money) .. COLOR_END
+		return COLOR_RED_DIMMED:WrapTextInColorCode('-' .. GetMoneyTextureString(-money))
 	else
-		return COLOR_GREEN .. '+' .. GetCoinTextureString(money) .. COLOR_END
+		return COLOR_GREEN_DIMMED:WrapTextInColorCode('+' .. GetMoneyTextureString(money))
 	end
 end
 
@@ -87,7 +90,7 @@ function addon:OnInitialize()
 	do
 		local h = {}
 		for charKey,_ in pairs(rawget(Broker_CashDB, 'char')) do
-			local charName, _, charRealm = strsplit(' ', charKey, 3)	-- strsplit(' - ', charKey) ne fonctionne pas
+			local charName, _, charRealm = strsplit(' ', charKey, 3)
 
 			-- Nom du royaume (unique)
 			if not h[charRealm] then
@@ -129,7 +132,7 @@ function addon:OnEnable()
 	if self.db.char.money == -1 then
 		self.db.char.money     = GetMoney()
 		self.db.char.since     = time()
-		self.db.char.lastSaved = time()
+		self.db.char.lastSaved = self.db.char.since
 	end
 
 	-- Sauve les données actuelles
@@ -142,7 +145,7 @@ end
 
 function addon:OnDisable()
 
-	-- Ferme et libère les deux tooltips
+	-- Libère les deux tooltips
 	if self.subTooltip then
 		libQTip:Release(self.subTooltip)
 		self.subTooltip = nil
@@ -169,16 +172,16 @@ function addon:PLAYER_MONEY()
 
 	-- Et les stats quotidienne/habdomadaire/mensuelle/annuelle
 	self.db.char.money     = money
-	self.db.char.day       = self.db.char.day   + diff
-	self.db.char.week      = self.db.char.week  + diff
-	self.db.char.month     = self.db.char.month + diff
-	self.db.char.year      = self.db.char.year  + diff
+	self.db.char.day       = (self.db.char.day   or 0) + diff
+	self.db.char.week      = (self.db.char.week  or 0) + diff
+	self.db.char.month     = (self.db.char.month or 0) + diff
+	self.db.char.year      = (self.db.char.year  or 0) + diff
 	self.db.char.lastSaved = time()
 
 	-- Met à jour le texte du LDB
 	local txt = GetCoinTextureString(money)
-	if diff ~= 0 then
-		txt = txt .. ' (' .. GetMoneyVariationString(diff) .. ')'
+	if self.db.global.showSession and self.session ~= 0 then
+		txt = txt .. ' (' .. GetVariationTextureString(self.session) .. ')'
 	end
 	self.dataObject.text = txt
 end
@@ -199,7 +202,7 @@ end
 
 -------------------------------------------------------------------------------
 function days_in_month(mnth, yr)
-	return date('*t', time( {year = yr, month = mnth + 1, day = 0 }))['day']
+	return date('*t', time( { year = yr, month = mnth + 1, day = 0 } ))['day']
 end
 
 function addon:CalcResetDates()
@@ -212,10 +215,9 @@ function addon:CalcResetDates()
 
 	-- Toutes les limites sont calculées à 00:00:00
 	local limit = {
-		hour  = 0,
-		min   = 0,
-		sec   = 0,
-		isdst = today.isdst
+		hour = 0,
+		min  = 0,
+		sec  = 0
 	}
 
 	-- Début du jour courant
@@ -268,10 +270,21 @@ function addon:ShowMainTooltip(LDBFrame)
 	self.mainTooltip:SmartAnchorTo(LDBFrame)
 	self.mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 	self.mainTooltip:Clear()
-	self.mainTooltip:SetCellMarginH(4)
+	self.mainTooltip:SetCellMarginV(2)
 
 	-- Header
 	self.mainTooltip:AddHeader(L['Name'], L['Cash'])
+	self.mainTooltip:AddSeparator()
+
+	-- Personnage courant
+	self.mainTooltip:AddLine()
+	self.mainTooltip:AddLine(self.charKey, GetMoneyTextureString(self.db.char.money))
+	self.mainTooltip:AddLine(L['Session'], GetVariationTextureString(self.session))
+	self.mainTooltip:AddLine(L['Day'],     GetVariationTextureString(self.db.char.day))
+	self.mainTooltip:AddLine(L['Week'],    GetVariationTextureString(self.db.char.week))
+	self.mainTooltip:AddLine(L['Month'],   GetVariationTextureString(self.db.char.month))
+	self.mainTooltip:AddLine(L['Year'],    GetVariationTextureString(self.db.char.year))
+	self.mainTooltip:AddLine()
 	self.mainTooltip:AddSeparator()
 
 	-- Prépare les données. Obligé de le faire ici dynamiquement
@@ -284,8 +297,8 @@ function addon:ShowMainTooltip(LDBFrame)
 		self.mainTooltip:AddLine(' ', ' ')					-- Ligne vide
 
 		rln = self.mainTooltip:AddLine()					-- Nom du royaume
-		self.mainTooltip:SetCell(rln, 1, realm, 2)			-- Sur 2 cols...
-		-- self.mainTooltip:SetLineTextColor(rln, 1, 1, 0, 1)	-- et en jaune
+		self.mainTooltip:SetCell(rln, 1, realm, 2)			-- Sur 2 cols
+		self.mainTooltip:SetCellTextColor(rln, 1, COLOR_YELLOW_DIMMED:GetRGBA())
 
 		-- Trie les personnages de ce royaume par ordre de richesse décroissante
 		table.sort(self.sortedChars[realm], function(c1, c2)
@@ -304,11 +317,11 @@ function addon:ShowMainTooltip(LDBFrame)
 			-- Ajoute le personnage (avec une marge de 10 pixels à gauche)
 			ln = self.mainTooltip:AddLine()
 			self.mainTooltip:SetCell(ln, 1, name, 1, 10)
-			self.mainTooltip:SetCell(ln, 2, GetCoinTextureString(charData.money))
+			self.mainTooltip:SetCell(ln, 2, GetMoneyTextureString(charData.money))
 
 			-- Surligne la ligne si c'est le perso courant
 			if realm == self.charRealm and name == self.charName then
-				self.mainTooltip:SetLineColor(ln, 1, 1, 0, 0.25)
+				-- self.mainTooltip:SetLineColor(ln, 1, 1, 0, 0.25)
 				-- self.mainTooltip:SetLineTextColor(ln, 1, 1, 0, 1)
 			end
 
@@ -324,14 +337,14 @@ function addon:ShowMainTooltip(LDBFrame)
 		-- Ajoute le total du royaume
 		rln = self.mainTooltip:AddLine()
 		self.mainTooltip:SetCell(rln, 1, L['Total'], 'LEFT', 1, 10)
-		self.mainTooltip:SetCell(rln, 2, GetCoinTextureString(realmMoney))
-		self.mainTooltip:SetLineTextColor(rln, 0.81, 0.81, 0.18, 1)
+		self.mainTooltip:SetCell(rln, 2, GetMoneyTextureString(realmMoney))
+		self.mainTooltip:SetLineTextColor(rln, COLOR_YELLOW_DIMMED:GetRGBA())
 	end
 
 	-- Ajoute le grand total
 	self.mainTooltip:AddLine(' ')
 	self.mainTooltip:AddSeparator()
-	self.mainTooltip:AddLine(L['Total'], GetCoinTextureString(totalMoney))
+	self.mainTooltip:AddLine(L['Total'], GetMoneyTextureString(totalMoney))
 
 	self.mainTooltip:Show()
 end
@@ -347,6 +360,7 @@ end
 
 -------------------------------------------------------------------------------
 function addon:ShowSubTooltip(mainTooltipLine, charKey)
+	local charData = rawget(Broker_CashDB, 'char')[charKey]
 
 	-- Affiche (ou déplace) le sous-tooltip
 	if not self.subTooltip then
@@ -356,33 +370,29 @@ function addon:ShowSubTooltip(mainTooltipLine, charKey)
 	self.subTooltip:SetPoint('TOPLEFT', mainTooltipLine, 'TOPRIGHT', 0, 10)
 	self.subTooltip:Clear()
 	self.subTooltip:SetFont(GameTooltipTextSmall)
-	self.subTooltip:SetCellMarginH(10)
+	self.subTooltip:SetCellMarginV(2)
 
 	-- Affiche les données du personnage
-	local charData = rawget(Broker_CashDB, 'char')[charKey]
-
-	-- Un bug dans LibQTip() tronque le texte de la cellule si on utilise le colspan... Tant pis :(
 	local ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, charKey, 'LEFT')
+	self.subTooltip:SetCell(ln, 1, charKey, 2)
 
 	ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)))
+	self.subTooltip:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)), 2)
 
 	ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateFormat'], charData.lastSaved)))
+	self.subTooltip:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateTimeFormat'], charData.lastSaved)), 2)
+	local ln = self.subTooltip:AddLine()
 
 	self.subTooltip:AddSeparator()
 	self.subTooltip:AddLine()
 
-	-- Affiche les stats du personnage
 	if charKey == self.charKey then
-		self.subTooltip:AddLine(L['Session'], GetMoneyVariationString(self.session))
+		self.subTooltip:AddLine(L['Session'], GetVariationTextureString(self.session))
 	end
-
-	self.subTooltip:AddLine(L['Day'],   GetMoneyVariationString(charData.day))
-	self.subTooltip:AddLine(L['Week'],  GetMoneyVariationString(charData.week))
-	self.subTooltip:AddLine(L['Month'], GetMoneyVariationString(charData.month))
-	self.subTooltip:AddLine(L['Year'],  GetMoneyVariationString(charData.year))
+	self.subTooltip:AddLine(L['Day'],   GetVariationTextureString(charData.day))
+	self.subTooltip:AddLine(L['Week'],  GetVariationTextureString(charData.week))
+	self.subTooltip:AddLine(L['Month'], GetVariationTextureString(charData.month))
+	self.subTooltip:AddLine(L['Year'],  GetVariationTextureString(charData.year))
 	self.subTooltip:Show()
 end
 

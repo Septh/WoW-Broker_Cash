@@ -1,16 +1,17 @@
 
-local addon = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
-local L     = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
-
+local addon         = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
+local L             = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
 local libDataBroker = LibStub('LibDataBroker-1.1')
 local libQTip       = LibStub('LibQTip-1.0')
 
-local FIRST_DAY_OF_WEEK  = 2	-- Lundi par défaut
+local FIRST_DAY_OF_WEEK   = 2	-- Lundi par défaut
 
 local tth = select(2, GameTooltipText:GetFontObject():GetFont())
 local GOLD_ICON_STRING    = ('|TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:2:0|t'):format(tth, tth)
 local SILVER_ICON_STRING  = ('|TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:2:0|t'):format(tth, tth)
 local COPPER_ICON_STRING  = ('|TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:2:0|t'):format(tth, tth)
+local PLUS_BUTTON_STRING  = ('|TInterface\\Buttons\\UI-PlusButton-Up:%d:%d:2:0|t'):format(tth, tth)
+local MINUS_BUTTON_STRING = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|t'):format(tth, tth)
 
 local SILVER_PER_GOLD     = _G.SILVER_PER_GOLD
 local COPPER_PER_SILVER   = _G.COPPER_PER_SILVER
@@ -23,13 +24,10 @@ local COLOR_GREEN_DIMMED  = CreateColor(0.1, 0.8, 0.1, 1)
 local COLOR_YELLOW        = CreateColor(1.0, 1.0, 0.1, 1)
 local COLOR_YELLOW_DIMMED = CreateColor(0.8, 0.8, 0.1, 1)
 
-local PLUS_BUTTON_STRING  = '|TInterface\\Buttons\\UI-PlusButton-Up:14:14:2:0|t'
-local MINUS_BUTTON_STRING = '|TInterface\\Buttons\\UI-MinusButton-Up:14:14:2:0|t'
-
 -------------------------------------------------------------------------------
 local defaults = {
 	global = {
-		firstDoW  = FIRST_DAY_OF_WEEK,
+		firstDoW    = FIRST_DAY_OF_WEEK,
 		showSession = false,
 		showDay     = true,
 		showWeek    = true,
@@ -38,25 +36,24 @@ local defaults = {
 		folds       = {}
 	},
 	char = {
-		money     = -1,
-		since     = 0,
-		lastSaved = 0,
-		day       = 0,
-		week      = 0,
-		month     = 0,
-		year      = 0
+		money       = -1,
+		since       = 0,
+		lastSaved   = 0,
+		day         = 0,
+		week        = 0,
+		month       = 0,
+		year        = 0
 	}
 }
 
 -------------------------------------------------------------------------------
-local function GetMoneyTextureString(money)
-
+local function GetAbsoluteMoneyString(money)
 	local gold   = math.floor(money / COPPER_PER_GOLD)
 	local silver = math.floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
 	local copper = money % COPPER_PER_SILVER
 
 	local str = string.format('%02d%s', copper, COPPER_ICON_STRING)
-	if silver > 0 or gold > 0 then
+	if (silver + gold) > 0 then
 		str = string.format('%02d%s ', silver, SILVER_ICON_STRING) .. str
 	end
 	if gold > 0 then
@@ -65,13 +62,13 @@ local function GetMoneyTextureString(money)
 	return str
 end
 
-local function GetVariationTextureString(money)
+local function GetRelativeMoneyString(money)
 	if (money or 0) == 0 then
 		return COLOR_YELLOW_DIMMED:WrapTextInColorCode('0')
 	elseif money < 0 then
-		return COLOR_RED_DIMMED:WrapTextInColorCode('-' .. GetMoneyTextureString(-money))
+		return COLOR_RED_DIMMED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-money))
 	else
-		return COLOR_GREEN_DIMMED:WrapTextInColorCode('+' .. GetMoneyTextureString(money))
+		return COLOR_GREEN_DIMMED:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(money))
 	end
 end
 
@@ -86,8 +83,6 @@ function addon:OnInitialize()
 
 	-- Charge ou crée les données sauvegardées
 	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', defaults, true)
-	self.db.char.since = self.db.char.since		-- S'assure que les tables AceDB sont initialisées
-												-- si c'est la première fois qu'on charge ce personnage
 
 	-- Recense les royaumes et les personnages connus
 	self.sortedRealms = {}
@@ -123,7 +118,6 @@ function addon:OnInitialize()
 	-- Crée l'icône LDB
 	self.dataObject = libDataBroker:NewDataObject('Broker_Cash', {
 		type    = 'data source',
-		-- icon    = 'Interface\\MoneyFrame\\UI-GoldIcon',
 		icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
 		text    = 'Cash',
 		OnEnter = function(f) addon:ShowMainTooltip(f) end
@@ -149,17 +143,7 @@ function addon:OnEnable()
 end
 
 function addon:OnDisable()
-
-	-- Libère les deux tooltips
-	if self.subTooltip then
-		libQTip:Release(self.subTooltip)
-		self.subTooltip = nil
-	end
-
-	if self.mainTooltip then
-		libQTip:Release(self.mainTooltip)
-		self.mainTooltip = nil
-	end
+	self:HideMainTooltip()
 end
 
 -------------------------------------------------------------------------------
@@ -186,7 +170,7 @@ function addon:PLAYER_MONEY()
 	-- Met à jour le texte du LDB
 	local txt = GetCoinTextureString(money)
 	if self.db.global.showSession and self.session ~= 0 then
-		txt = txt .. ' (' .. GetVariationTextureString(self.session) .. ')'
+		txt = txt .. ' (' .. GetRelativeMoneyString(self.session) .. ')'
 	end
 	self.dataObject.text = txt
 end
@@ -197,12 +181,13 @@ function addon:CheckStatResets(charData)
 	-- Calcule les dates de réinitialisation des statistiques
 	self:CalcResetDates()
 
-	-- Réinitialise à 0 les stats qui ont dépassé leur date limite
+	-- Réinitialise les stats qui ont dépassé leur date limite
+	-- (à nil plutôt que 0 pour rester consistant avec AceDB)
 	local charLastSaved = charData.lastSaved or 0
-	charData.day   = (charData.day   and charLastSaved >= self.startOfDay)   and charData.day   or nil	-- Quotidienne
-	charData.week  = (charData.week  and charLastSaved >= self.startOfWeek)  and charData.week  or nil 	-- Hebdomadaire
-	charData.month = (charData.month and charLastSaved >= self.startOfMonth) and charData.month or nil 	-- Mensuelle
-	charData.year  = (charData.year  and charLastSaved >= self.startOfYear)  and charData.year  or nil 	-- Annuelle
+	if charLastSaved < self.startOfDay   then charData.day   = nil end	-- Quotidienne
+	if charLastSaved < self.startOfWeek  then charData.week  = nil end 	-- Hebdomadaire
+	if charLastSaved < self.startOfMonth then charData.month = nil end 	-- Mensuelle
+	if charLastSaved < self.startOfYear  then charData.year  = nil end 	-- Annuelle
 end
 
 -------------------------------------------------------------------------------
@@ -212,13 +197,13 @@ end
 
 function addon:CalcResetDates()
 
-	-- On recalcule seulement si on a changé de jour
-	-- depuis le dernier appel à la fonction
+	-- On recalcule seulement si on a changé de jour depuis le dernier calcul
 	local today = date('*t')
 	if (self.yday or 0) == today.yday then return end
 	self.yday = today.yday
 
 	-- Toutes les limites sont calculées à 00:00:00
+	-- TODO: Gérer l'heure d'été/hiver ?
 	local limit = {
 		hour = 0,
 		min  = 0,
@@ -259,49 +244,59 @@ function addon:CalcResetDates()
 end
 
 -------------------------------------------------------------------------------
-local function MainTooltip_OnClickHeader(lineFrame, realm)
+local function MainTooltip_OnClickRealm(lineFrame, realm)
+	-- Replie ou déplie le royaume et rafraîchit le tooltip
 	addon.db.global.folds[realm] = not addon.db.global.folds[realm]
-	addon:ShowMainTooltip()
+	addon:UpdateMainTooltip()
 end
 
-local function MainTooltip_OnEnterLine(lineFrame, charKey)
+local function MainTooltip_OnEnterChar(lineFrame, charKey)
+	-- Affiche le second tooltip
 	addon:ShowSubTooltip(lineFrame, charKey)
 end
 
-local function MainTooltip_OnLeaveLine(lineFrame)
+local function MainTooltip_OnLeaveChar(lineFrame)
+	-- Masque le second tooltip
 	addon:HideSubTooltip()
 end
 
 function addon:ShowMainTooltip(LDBFrame)
-
-	-- Prépare le tooltip
 	if not self.mainTooltip then
 		self.mainTooltip = libQTip:Acquire('BrokerCash_MainTooltip', 2, 'LEFT', 'RIGHT')
 		self.mainTooltip:SmartAnchorTo(LDBFrame)
+		self.mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 	end
-	self.mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
-	self.mainTooltip:Clear()
-	self.mainTooltip:SetCellMarginV(2)
+	self:UpdateMainTooltip()
+end
+
+function addon:UpdateMainTooltip()
+	local mtt = self.mainTooltip
+	local ln, rln
+
+	-- Prépare le tooltip
+	mtt:Hide()
+	mtt:Clear()
+	mtt:SetCellMarginV(2)
 
 	-- Header
-	self.mainTooltip:AddHeader(L['Name'], L['Cash'])
-	self.mainTooltip:AddSeparator()
+	mtt:AddHeader(L['Name'], L['Cash'])
+	mtt:AddSeparator()
 
 	-- Personnage courant
-	self.mainTooltip:AddLine()
-	self.mainTooltip:AddLine(self.charKey, GetMoneyTextureString(self.db.char.money))
-	self.mainTooltip:AddLine(L['Session'], GetVariationTextureString(self.session))
-	self.mainTooltip:AddLine(L['Day'],     GetVariationTextureString(self.db.char.day))
-	self.mainTooltip:AddLine(L['Week'],    GetVariationTextureString(self.db.char.week))
-	self.mainTooltip:AddLine(L['Month'],   GetVariationTextureString(self.db.char.month))
-	self.mainTooltip:AddLine(L['Year'],    GetVariationTextureString(self.db.char.year))
-	self.mainTooltip:AddLine('')
-	self.mainTooltip:AddSeparator()
-	self.mainTooltip:AddLine('')
+	mtt:AddLine()
+	mtt:AddLine(self.charKey, GetAbsoluteMoneyString(self.db.char.money))
+	mtt:AddLine('')
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Session'], GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.session),       GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Day'],     GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day),   GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Week'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week),  GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Month'],   GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Year'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year),  GameTooltipTextSmall)
+	mtt:AddLine('')
+	mtt:AddSeparator()
+	mtt:AddLine('')
 
 	-- Liste tous les personnages, par ordre des royaumes triés au début
 	local charsDB, realmMoney, totalMoney = rawget(Broker_CashDB, 'char'), 0, 0
-	local rln, ln
 	for _,realm in ipairs(self.sortedRealms) do
 
 		-- Trie les personnages de ce royaume par ordre de richesse décroissante
@@ -310,12 +305,12 @@ function addon:ShowMainTooltip(LDBFrame)
 		end)
 
 		-- 1/ Nom du royaume + nombre de personnages (la richesse est ajoutée après la boucle)
-		rln = self.mainTooltip:AddLine()
-		self.mainTooltip:SetCell(rln, 1, ('%s %s (%d)'):format(self.db.global.folds[realm] and PLUS_BUTTON_STRING or MINUS_BUTTON_STRING, realm, #self.sortedChars[realm]))
-		self.mainTooltip:SetCellTextColor(rln, 1, COLOR_YELLOW_DIMMED:GetRGBA())
+		rln = mtt:AddLine()
+		mtt:SetCell(rln, 1, ('%s %s (%d)'):format(self.db.global.folds[realm] and PLUS_BUTTON_STRING or MINUS_BUTTON_STRING, realm, #self.sortedChars[realm]))
+		mtt:SetCellTextColor(rln, 1, COLOR_YELLOW_DIMMED:GetRGBA())
 
 		-- Gestion du clic sur cette ligne
-		self.mainTooltip:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickHeader, realm)
+		mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
 
 		-- 2/ Personnages de ce royaume
 		realmMoney = 0
@@ -327,14 +322,14 @@ function addon:ShowMainTooltip(LDBFrame)
 			self:CheckStatResets(charData)
 
 			if not self.db.global.folds[realm] then
-				-- Ajoute le personnage (avec une marge de 10 pixels à gauche)
-				ln = self.mainTooltip:AddLine()
-				self.mainTooltip:SetCell(ln, 1, name, 1, 20)
-				self.mainTooltip:SetCell(ln, 2, GetMoneyTextureString(charData.money))
+				-- Ajoute le personnage (avec une marge à gauche)
+				ln = mtt:AddLine()
+				mtt:SetCell(ln, 1, name, 1, 20)
+				mtt:SetCell(ln, 2, GetAbsoluteMoneyString(charData.money))
 
 				-- Gestion du second tooltip pour cette ligne
-				self.mainTooltip:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterLine, charKey)
-				self.mainTooltip:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveLine)
+				mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, charKey)
+				mtt:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveChar)
 			end
 
 			-- Comptabilise la richesse par royaume / totale
@@ -343,20 +338,21 @@ function addon:ShowMainTooltip(LDBFrame)
 		end
 
 		-- 3/ Richesse de ce royaume
-		self.mainTooltip:SetCell(rln, 2, GetMoneyTextureString(realmMoney))
-		self.mainTooltip:SetCellTextColor(rln, 2, COLOR_YELLOW_DIMMED:GetRGBA())
+		mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney))
+		mtt:SetCellTextColor(rln, 2, COLOR_YELLOW_DIMMED:GetRGBA())
+		mtt:AddLine()
 	end
 
 	-- Ajoute le grand total
-	self.mainTooltip:AddSeparator()
-	self.mainTooltip:AddLine(L['Total'], GetMoneyTextureString(totalMoney))
+	mtt:AddSeparator()
+	mtt:AddLine(L['Total'], GetAbsoluteMoneyString(totalMoney))
+	mtt:AddLine()
 
 	-- Ouf !
-	self.mainTooltip:Show()
+	mtt:Show()
 end
 
 function addon:HideMainTooltip()
-
 	self:HideSubTooltip()
 	if self.mainTooltip then
 		self.mainTooltip:Release()
@@ -367,6 +363,7 @@ end
 -------------------------------------------------------------------------------
 function addon:ShowSubTooltip(mainTooltipLine, charKey)
 	local charData = rawget(Broker_CashDB, 'char')[charKey]
+	local ln
 
 	-- Affiche (ou déplace) le sous-tooltip
 	if not self.subTooltip then
@@ -379,31 +376,25 @@ function addon:ShowSubTooltip(mainTooltipLine, charKey)
 	self.subTooltip:SetCellMarginV(2)
 
 	-- Affiche les données du personnage
-	local ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, charKey, 2)
+	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, charKey, 2)
+	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)), 2)
+	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateTimeFormat'], charData.lastSaved)), 2)
 
-	ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)), 2)
-
-	ln = self.subTooltip:AddLine()
-	self.subTooltip:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateTimeFormat'], charData.lastSaved)), 2)
-	local ln = self.subTooltip:AddLine()
-
+	self.subTooltip:AddLine()
 	self.subTooltip:AddSeparator()
 	self.subTooltip:AddLine()
 
 	if charKey == self.charKey then
-		self.subTooltip:AddLine(L['Session'], GetVariationTextureString(self.session))
+		self.subTooltip:AddLine(L['Session'], GetRelativeMoneyString(self.session))
 	end
-	self.subTooltip:AddLine(L['Day'],   GetVariationTextureString(charData.day))
-	self.subTooltip:AddLine(L['Week'],  GetVariationTextureString(charData.week))
-	self.subTooltip:AddLine(L['Month'], GetVariationTextureString(charData.month))
-	self.subTooltip:AddLine(L['Year'],  GetVariationTextureString(charData.year))
+	self.subTooltip:AddLine(L['Day'],   GetRelativeMoneyString(charData.day))
+	self.subTooltip:AddLine(L['Week'],  GetRelativeMoneyString(charData.week))
+	self.subTooltip:AddLine(L['Month'], GetRelativeMoneyString(charData.month))
+	self.subTooltip:AddLine(L['Year'],  GetRelativeMoneyString(charData.year))
 	self.subTooltip:Show()
 end
 
 function addon:HideSubTooltip()
-
 	if self.subTooltip then
 		self.subTooltip:Release()
 	end

@@ -35,7 +35,11 @@ Comments are disabled on Curse.com and on Curseforge.com. Should you need any he
 
 
 ##Release notes
-1.0.0 Initial release
+Version 1.0.1 - 10/17/2016
+* Highlight LDB frame on show tooltip
+
+Version 1.0.0
+* Initial release
 
 
 ##Licence

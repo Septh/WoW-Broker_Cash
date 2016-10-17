@@ -1,7 +1,7 @@
 ## Interface: 70000
 ## Title: Broker: Cash
 ## Notes: Keep track of your gold incomes and outcomes
-## Version: 1.0.0
+## Version: 1.0.1
 ## Author: Septh
 ## OptionalDeps: !Swatter
 ## SavedVariables: Broker_CashDB

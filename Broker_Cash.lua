@@ -122,6 +122,13 @@ function addon:OnInitialize()
 		text    = 'Cash',
 		OnEnter = function(f) addon:ShowMainTooltip(f) end
 	})
+
+	-- Texture pour surligner l'icône LDB
+	self.highlightFrame = CreateFrame('Frame')
+	self.highlightFrame:Hide()
+	self.highlightTexture = self.highlightFrame:CreateTexture(nil, 'OVERLAY')
+	self.highlightTexture:SetTexture('Interface\\QuestFrame\\UI-QuestTitleHighlight')
+	self.highlightTexture:SetBlendMode('ADD')
 end
 
 -------------------------------------------------------------------------------
@@ -265,6 +272,10 @@ function addon:ShowMainTooltip(LDBFrame)
 		self.mainTooltip = libQTip:Acquire('BrokerCash_MainTooltip', 2, 'LEFT', 'RIGHT')
 		self.mainTooltip:SmartAnchorTo(LDBFrame)
 		self.mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
+
+		-- Surligne l'icône LDB
+		self.highlightTexture:SetParent(LDBFrame)
+		self.highlightTexture:SetAllPoints(LDBFrame)
 	end
 	self:UpdateMainTooltip()
 end
@@ -356,6 +367,9 @@ function addon:HideMainTooltip()
 	self:HideSubTooltip()
 	if self.mainTooltip then
 		self.mainTooltip:Release()
+
+		-- Cache le surlignage
+		self.highlightTexture:SetParent(self.highlightFrame)
 	end
 	self.mainTooltip = nil
 end

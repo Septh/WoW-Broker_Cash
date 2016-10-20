@@ -35,6 +35,9 @@ Comments are disabled on Curse.com and on Curseforge.com. Should you need any he
 
 
 ##Release notes
+Version 1.0.2 - 10/20/2016
+* Fix Lua errors when connecting a char for the first time
+
 Version 1.0.1 - 10/17/2016
 * Highlight LDB frame on show tooltip
 

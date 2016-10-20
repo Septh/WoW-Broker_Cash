@@ -83,6 +83,7 @@ function addon:OnInitialize()
 
 	-- Charge ou crée les données sauvegardées
 	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', defaults, true)
+	self.db.char.since = self.db.char.since	-- S'assure que AceDB est initialisée pour les nouveaux persos
 
 	-- Recense les royaumes et les personnages connus
 	self.sortedRealms = {}

@@ -34,7 +34,7 @@ There is currently no way to delete or reset a character's stats; I'll add this 
 I rarely read comments here on Curse.com; should you need any help, you'd better open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash "GitHub repository"), where the projet lives.
 
 
-##Release notes
+##Change Log
 Version 1.0.3 - 10-21/2016
 * Use `BreakUpLargeNumbers()` for a nicer main LDB text
 * Updated Readme.md

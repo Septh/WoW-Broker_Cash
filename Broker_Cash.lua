@@ -252,18 +252,32 @@ function addon:CalcResetDates()
 end
 
 -------------------------------------------------------------------------------
-local function MainTooltip_OnClickRealm(lineFrame, realm)
+local function MainTooltip_OnClickRealm(realmLineFrame, realm)
 	-- Replie ou déplie le royaume et rafraîchit le tooltip
-	addon.db.global.folds[realm] = not addon.db.global.folds[realm]
+	if addon.db.global.folds[realm] then
+		addon.db.global.folds[realm] = nil
+	else
+		addon.db.global.folds[realm] = true
+	end
 	addon:UpdateMainTooltip()
 end
 
-local function MainTooltip_OnEnterChar(lineFrame, charKey)
+local function MainTooltip_OnEnterRealm(realmLineFrame, realm)
 	-- Affiche le second tooltip
-	addon:ShowSubTooltip(lineFrame, charKey)
+	addon:ShowRealmTooltip(realmLineFrame, realm)
 end
 
-local function MainTooltip_OnLeaveChar(lineFrame)
+local function MainTooltip_OnLeaveRealm(realmLineFrame)
+	-- Masque le second tooltip
+	addon:HideSubTooltip()
+end
+
+local function MainTooltip_OnEnterChar(charLineFrame, charKey)
+	-- Affiche le second tooltip
+	addon:ShowCharTooltip(charLineFrame, charKey)
+end
+
+local function MainTooltip_OnLeaveChar(charLineFrame)
 	-- Masque le second tooltip
 	addon:HideSubTooltip()
 end
@@ -321,6 +335,10 @@ function addon:UpdateMainTooltip()
 		mtt:SetCell(rln, 1, ('%s %s (%d)'):format(self.db.global.folds[realm] and PLUS_BUTTON_STRING or MINUS_BUTTON_STRING, realm, #self.sortedChars[realm]))
 		mtt:SetCellTextColor(rln, 1, COLOR_YELLOW_DIMMED:GetRGBA())
 
+		-- Gestion du second tooltip pour cette ligne
+		mtt:SetLineScript(rln, 'OnEnter', MainTooltip_OnEnterRealm, realm)
+		mtt:SetLineScript(rln, 'OnLeave', MainTooltip_OnLeaveRealm)
+
 		-- Gestion du clic sur cette ligne
 		mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
 
@@ -376,9 +394,59 @@ function addon:HideMainTooltip()
 end
 
 -------------------------------------------------------------------------------
-function addon:ShowSubTooltip(mainTooltipLine, charKey)
-	local charData = rawget(Broker_CashDB, 'char')[charKey]
-	local ln
+function addon:ShowRealmTooltip(realmLineFrame, realm)
+
+	-- Affiche le tooltip
+	self:ShowSubTooltip(realmLineFrame)
+	local stt = self.subTooltip
+
+	-- Calcule et affiche les données du royaume
+	local realmDay, realmWeek, realmMonth, realmYear = 0, 0, 0, 0
+	for charKey, charData in pairs(rawget(Broker_CashDB, 'char')) do
+		local charName, _, charRealm = strsplit(' ', charKey, 3)
+
+		if realm == charRealm then
+			realmDay   = realmDay   + (charData['day']   or 0)
+			realmWeek  = realmWeek  + (charData['week']  or 0)
+			realmMonth = realmMonth + (charData['month'] or 0)
+			realmYear  = realmYear  + (charData['year']  or 0)
+		end
+	end
+
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(realmDay))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(realmWeek))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(realmMonth))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(realmYear))
+	stt:Show()
+end
+
+function addon:ShowCharTooltip(charLineFrame, charKey)
+
+	-- Affiche le sous-tooltip
+	self:ShowSubTooltip(charLineFrame)
+	local stt = self.subTooltip
+
+	-- Affiche les données du personnage
+	local charData, ln = rawget(Broker_CashDB, 'char')[charKey]
+	ln = stt:AddLine(); stt:SetCell(ln, 1, charKey, 2)
+	ln = stt:AddLine(); stt:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)), 2)
+	ln = stt:AddLine(); stt:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateTimeFormat'], charData.lastSaved)), 2)
+
+	stt:AddLine()
+	stt:AddSeparator()
+	stt:AddLine()
+
+	if charKey == self.charKey then
+		stt:AddLine(L['Session'], GetRelativeMoneyString(self.session))
+	end
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(charData.day))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(charData.week))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(charData.month))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(charData.year))
+	stt:Show()
+end
+
+function addon:ShowSubTooltip(mainTooltipLine)
 
 	-- Affiche (ou déplace) le sous-tooltip
 	if not self.subTooltip then
@@ -389,24 +457,6 @@ function addon:ShowSubTooltip(mainTooltipLine, charKey)
 	self.subTooltip:Clear()
 	self.subTooltip:SetFont(GameTooltipTextSmall)
 	self.subTooltip:SetCellMarginV(2)
-
-	-- Affiche les données du personnage
-	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, charKey, 2)
-	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, (L['Since']):format(date(L['DateFormat'], charData.since)), 2)
-	ln = self.subTooltip:AddLine(); self.subTooltip:SetCell(ln, 1, (L['LastSaved']):format(date(L['DateTimeFormat'], charData.lastSaved)), 2)
-
-	self.subTooltip:AddLine()
-	self.subTooltip:AddSeparator()
-	self.subTooltip:AddLine()
-
-	if charKey == self.charKey then
-		self.subTooltip:AddLine(L['Session'], GetRelativeMoneyString(self.session))
-	end
-	self.subTooltip:AddLine(L['Day'],   GetRelativeMoneyString(charData.day))
-	self.subTooltip:AddLine(L['Week'],  GetRelativeMoneyString(charData.week))
-	self.subTooltip:AddLine(L['Month'], GetRelativeMoneyString(charData.month))
-	self.subTooltip:AddLine(L['Year'],  GetRelativeMoneyString(charData.year))
-	self.subTooltip:Show()
 end
 
 function addon:HideSubTooltip()

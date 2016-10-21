@@ -1,5 +1,4 @@
 # Broker: Cash
-
 **The ecstasy of gold**
 
 ## Purpose
@@ -22,7 +21,7 @@ Broker: Cash does not maintain a full history of your gold gains and losses; it 
 
 Each stat is reset to 0 at the beginning of the corresponding period.
 
-Also, a special *session* statistic shows how much gold the current character earned or spent since connection.
+Also, a special **session** statistic shows how much gold the current character earned or spent since connection.
 
 
 ## Configuration
@@ -32,16 +31,20 @@ There is no user configurable options. Just install and enjoy!
 
 ## TODO
 
-There is currently no way to delete or reset a character's stats; I'll add this functionnality in a future release.
+* There is currently no way to delete or reset a character's stats; I'll add this functionnality in a future release.
+* Add some more locales. Help welcome: just fork the [GitHub repository](https://github.com/Septh/WoW-Broker_Cash) and submit a Pull Request
+
 
 
 ## Need help?
 
-I rarely read comments here on Curse.com; should you need any help, you'd better open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash "GitHub repository"), where the projet lives.
+I rarely read comments here on Curse.com; should you need any help, you'd better open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash), where the projet lives.
 
 
 ## Change Log
 
+* Version 1.1.0 - 10-21/2016
+	* Also show wealth variation per realm
 * Version 1.0.3 - 10-21/2016
 	* Use `BreakUpLargeNumbers()` for a nicer main LDB text
 	* Updated Readme.md
@@ -54,12 +57,14 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 
 ## Licence
+
 Broker: Cash is released under the [MIT licence](https://opensource.org/licenses/MIT).
 
 
 ## Enjoy!
-Also check my other addons: [BagMeters](https://www.curse.com/addons/wow/bagmeters), [BankItems_MailWatch](https://www.curse.com/addons/wow/bankitems_mailwatch), [2048 for WoW](https://www.curse.com/addons/wow/wow2048).
 
-If you are an addon developer, also check my [WoW Bundle for vscode](https://marketplace.visualstudio.com/items?itemName=Septh.wow-bundle) extension which brings better Lua language support and WoW API highlighting to Visual Studio Code.
+Also check my other addons: [BagMeters](https://www.curse.com/addons/wow/bagmeters), [BankItems_MailWatch](https://www.curse.com/addons/wow/bankitems_mailwatch) and [2048 for WoW](https://www.curse.com/addons/wow/wow2048).
+
+If you are an addon developer, also check my [WoW Bundle for vscode](https://marketplace.visualstudio.com/items?itemName=Septh.wow-bundle) extension which brings better Lua language support and WoW API highlighting to Microsoft Visual Studio Code.
 
 -- Septh

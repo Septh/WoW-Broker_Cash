@@ -176,7 +176,7 @@ function addon:PLAYER_MONEY()
 	self.db.char.lastSaved = time()
 
 	-- Met à jour le texte du LDB
-	local txt = GetCoinTextureString(money)
+	local txt = GetAbsoluteMoneyString(money)
 	if self.db.global.showSession and self.session ~= 0 then
 		txt = txt .. ' (' .. GetRelativeMoneyString(self.session) .. ')'
 	end

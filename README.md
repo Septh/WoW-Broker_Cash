@@ -19,7 +19,7 @@ Broker: Cash does not maintain a full history of your gold gains and losses; it 
 
 Each stat is reset to 0 at the beginning of the corresponding period.
 
-Also, a special, dynamic *session* statistic shows how much gold the current character earned or spent since connection.
+Also, a special *session* statistic shows how much gold the current character earned or spent since connection.
 
 
 ##Configuration
@@ -31,10 +31,14 @@ There is currently no way to delete or reset a character's stats; I'll add this 
 
 
 ##Need help?
-Comments are disabled on Curse.com and on Curseforge.com. Should you need any help, please open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash "GitHub repository"), where the projet lives.
+I rarely read comments here on Curse.com; should you need any help, you'd better open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash "GitHub repository"), where the projet lives.
 
 
 ##Release notes
+Version 1.0.3 - 10-21/2016
+* Use `BreakUpLargeNumbers()` for a nicer main LDB text
+* Updated Readme.md
+
 Version 1.0.2 - 10/20/2016
 * Fix Lua errors when connecting a char for the first time
 

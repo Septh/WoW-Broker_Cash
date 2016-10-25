@@ -4,8 +4,9 @@ local L             = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
 local libDataBroker = LibStub('LibDataBroker-1.1')
 local libQTip       = LibStub('LibQTip-1.0')
 
-local FIRST_DAY_OF_WEEK   = 2	-- Lundi par défaut
+local FIRST_DAY_OF_WEEK   = 2	-- Lundi
 
+-- Texture strings
 local tth = select(2, GameTooltipText:GetFontObject():GetFont())
 local GOLD_ICON_STRING    = ('|TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:2:0|t'):format(tth, tth)
 local SILVER_ICON_STRING  = ('|TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:2:0|t'):format(tth, tth)
@@ -24,27 +25,84 @@ local COLOR_GREEN_DIMMED  = CreateColor(0.1, 0.8, 0.1, 1)
 local COLOR_YELLOW        = CreateColor(1.0, 1.0, 0.1, 1)
 local COLOR_YELLOW_DIMMED = CreateColor(0.8, 0.8, 0.1, 1)
 
+StaticPopupDialogs['BROKERCASH_CHAR'] = {
+	text           = 'Reset or Delete %s?',
+	button1        = 'Reset',
+	button2        = 'Delete',
+	button3        = 'Cancel',
+	timeout        = 0,
+	whileDead      = true,
+	hideOnEscape   = true,
+	preferredIndex = 3
+}
+
 -------------------------------------------------------------------------------
 local defaults = {
-	global = {
-		firstDoW    = FIRST_DAY_OF_WEEK,
-		showSession = false,
-		showDay     = true,
-		showWeek    = true,
-		showMonth   = true,
-		showYear    = true,
-		folds       = {}
-	},
 	char = {
-		money       = -1,
-		since       = 0,
-		lastSaved   = 0,
-		day         = 0,
-		week        = 0,
-		month       = 0,
-		year        = 0
+		money     = -1,
+		since     = 0,
+		lastSaved = 0,
+		day       = 0,
+		week      = 0,
+		month     = 0,
+		year      = 0
 	}
 }
+
+local options_panel = {
+	name    = 'Broker_Cash',
+	handler = addon,
+	type    = 'group',
+	args    = nil	-- Initialisé plus tard
+}
+
+-------------------------------------------------------------------------------
+local function SplitCharKey(key)
+	local name, _, realm = strsplit(' ', key, 3)
+	return name, realm
+end
+
+local function InvertCharKey(key)
+	key = key:gsub('(%S+) %- (%S+)', '%2 - %1')
+	return key
+end
+
+-------------------------------------------------------------------------------
+local _DB = {}
+local function sortedDB()
+	-- Remplit et trie le tableau
+	if #_DB == 0 then
+		local hash = {}
+		for _,charKey in pairs(rawget(Broker_CashDB, 'char') or {}) do
+			local charName, charRealm = SplitCharKey(charKey)
+			if not hash[charRealm] then
+				hash[charRealm] = true
+				_DB:insert(charRealm)
+			end
+		end
+		_DB:sort(function(r1, r2)
+			if r1 == addon.realmName then
+				return true
+			elseif r2 == addon.realmName then
+				return false
+			else
+				return r1 < r2
+			end
+		end)
+	end
+
+	-- Iterator : https://www.lua.org/pil/19.3.html
+	local i = 0
+	local iter = function()
+		i = i + 1
+		if _DB[i] == nil then
+			return nil
+		else
+			return _DB[i], rawget(Broker_CashDB, 'char')[_DB[i]]
+		end
+	end
+	return iter
+end
 
 -------------------------------------------------------------------------------
 local function GetAbsoluteMoneyString(money)
@@ -82,8 +140,13 @@ function addon:OnInitialize()
 	self.session   = 0
 
 	-- Charge ou crée les données sauvegardées
+	-- Et s'assure que les tables AceDB sont initialisées pour ce perso (si première connexion)
 	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', defaults, true)
-	self.db.char.since = self.db.char.since	-- S'assure que AceDB est initialisée pour les nouveaux persos
+	self.db.char.since = self.db.char.since
+
+	-- v1.2.0: n'enregistre plus les données de folding
+	self.db.global.folds = nil
+	self.folds = {}
 
 	-- Recense les royaumes et les personnages connus
 	self.sortedRealms = {}
@@ -91,12 +154,17 @@ function addon:OnInitialize()
 	do
 		local h = {}
 		for charKey,_ in pairs(rawget(Broker_CashDB, 'char')) do
-			local charName, _, charRealm = strsplit(' ', charKey, 3)
+			local charName, charRealm = SplitCharKey(charKey)
 
 			-- Nom du royaume (unique)
 			if not h[charRealm] then
 				h[charRealm] = true
+
+				-- Insère le royaume pour le tri
 				table.insert(self.sortedRealms, charRealm)
+
+				-- Royaume replié par défaut dans le tooltip
+				self.folds[charRealm] = true
 			end
 
 			-- Nom du personnage
@@ -104,8 +172,11 @@ function addon:OnInitialize()
 			table.insert(self.sortedChars[charRealm], charName)
 		end
 
+		-- Déplie le royaume courant
+		self.folds[self.charRealm] = false
+
 		-- Trie les royaumes par ordre alphabétique, le royaume courant en premier
-		table.sort(self.sortedRealms, function(r1, r2)
+		table.sort(self.sortedRealms, nil, function(r1, r2)
 			if r1 == addon.charRealm then
 				return true
 			elseif r2 == addon.charRealm then
@@ -176,11 +247,7 @@ function addon:PLAYER_MONEY()
 	self.db.char.lastSaved = time()
 
 	-- Met à jour le texte du LDB
-	local txt = GetAbsoluteMoneyString(money)
-	if self.db.global.showSession and self.session ~= 0 then
-		txt = txt .. ' (' .. GetRelativeMoneyString(self.session) .. ')'
-	end
-	self.dataObject.text = txt
+	self.dataObject.text = GetAbsoluteMoneyString(money)
 end
 
 -------------------------------------------------------------------------------
@@ -225,7 +292,7 @@ function addon:CalcResetDates()
 	self.startOfDay = time(limit)
 
 	-- Début de la semaine courante
-	limit.day   = today.day - (today.wday >= self.db.global.firstDoW and (today.wday - self.db.global.firstDoW) or (7 - today.wday))
+	limit.day   = today.day - (today.wday >= FIRST_DAY_OF_WEEK and (today.wday - FIRST_DAY_OF_WEEK) or (7 - today.wday))
 	limit.month = today.month
 	limit.year  = today.year
 	if (limit.day < 1) then
@@ -252,13 +319,9 @@ function addon:CalcResetDates()
 end
 
 -------------------------------------------------------------------------------
-local function MainTooltip_OnClickRealm(realmLineFrame, realm)
+local function MainTooltip_OnClickRealm(realmLineFrame, realm, button)
 	-- Replie ou déplie le royaume et rafraîchit le tooltip
-	if addon.db.global.folds[realm] then
-		addon.db.global.folds[realm] = nil
-	else
-		addon.db.global.folds[realm] = true
-	end
+	addon.folds[realm] = not addon.folds[realm]
 	addon:UpdateMainTooltip()
 end
 
@@ -270,6 +333,9 @@ end
 local function MainTooltip_OnLeaveRealm(realmLineFrame)
 	-- Masque le second tooltip
 	addon:HideSubTooltip()
+end
+
+local function MainTooltip_OnClickChar(charLineFrame, charKey, button)
 end
 
 local function MainTooltip_OnEnterChar(charLineFrame, charKey)
@@ -332,7 +398,7 @@ function addon:UpdateMainTooltip()
 
 		-- 1/ Nom du royaume + nombre de personnages (la richesse est ajoutée après la boucle)
 		rln = mtt:AddLine()
-		mtt:SetCell(rln, 1, ('%s %s (%d)'):format(self.db.global.folds[realm] and PLUS_BUTTON_STRING or MINUS_BUTTON_STRING, realm, #self.sortedChars[realm]))
+		mtt:SetCell(rln, 1, ('%s %s (%d)'):format(self.folds[realm] and PLUS_BUTTON_STRING or MINUS_BUTTON_STRING, realm, #self.sortedChars[realm]))
 		mtt:SetCellTextColor(rln, 1, COLOR_YELLOW_DIMMED:GetRGBA())
 
 		-- Gestion du second tooltip pour cette ligne
@@ -351,7 +417,7 @@ function addon:UpdateMainTooltip()
 			local charData = charsDB[charKey]
 			self:CheckStatResets(charData)
 
-			if not self.db.global.folds[realm] then
+			if not self.folds[realm] then
 				-- Ajoute le personnage (avec une marge à gauche)
 				ln = mtt:AddLine()
 				mtt:SetCell(ln, 1, name, 1, 20)
@@ -403,7 +469,7 @@ function addon:ShowRealmTooltip(realmLineFrame, realm)
 	-- Calcule et affiche les données du royaume
 	local realmDay, realmWeek, realmMonth, realmYear = 0, 0, 0, 0
 	for charKey, charData in pairs(rawget(Broker_CashDB, 'char')) do
-		local charName, _, charRealm = strsplit(' ', charKey, 3)
+		local charName, charRealm = SplitCharKey(charKey)
 
 		if realm == charRealm then
 			realmDay   = realmDay   + (charData['day']   or 0)

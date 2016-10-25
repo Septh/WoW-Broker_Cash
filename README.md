@@ -43,9 +43,11 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 ## Change Log
 
-* Version 1.1.0 - 10-21/2016
+* Version 1.1.0 - 10/26/2016
+	* Toc update for 7.1
+* Version 1.1.0 - 10/21/2016
 	* Also show wealth variation per realm
-* Version 1.0.3 - 10-21/2016
+* Version 1.0.3 - 10/21/2016
 	* Use `BreakUpLargeNumbers()` for a nicer main LDB text
 	* Updated Readme.md
 * Version 1.0.2 - 10/20/2016

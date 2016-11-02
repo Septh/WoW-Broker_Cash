@@ -12,11 +12,23 @@ L['Since'] = '> Recorded since %s'
 L['LastSaved'] = '> Last seen on %s'
 L['DateFormat'] = '%x'
 L['DateTimeFormat'] = '%x, %X'
+L['Session'] = 'Current session'
 L['Day'] = 'Today'
 L['Week'] = 'This week'
 L['Month'] = 'This month'
 L['Year'] = 'This year'
 
--- Other
-L['Session'] = 'Current session'
-L['NoStat'] = 'N/A'
+-- Dialog
+L['Reset'] = true
+L['Delete'] = true
+L['DLGINFO0'] = 'Notice'
+L['DLGINFO1'] = 'Select one or more characters in the list below, then select an action to perform on them:'
+L['DLGINFO2'] = 'will reset the characters\'s stats to 0 but keep them in the database.'
+L['DLGINFO3'] = 'will remove the characters\'s stats from the database. Note that you cannot delete the current character.'
+L['DLGINFO4'] = 'Warning, these actions are irreversible!'
+L['NUMSELECTED'] = '%d selected'
+L['RESET_TOON'] = 'Reset this toon:'
+L['RESET_TOONS'] = 'Reset %d toons:'
+L['DELETE_TOON'] = 'Delete this toon:'
+L['DELETE_TOONS'] = 'Delete %d toons:'
+L['Are you sure?'] = true

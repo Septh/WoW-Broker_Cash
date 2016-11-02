@@ -24,6 +24,11 @@ Each stat is reset to 0 at the beginning of the corresponding period.
 Also, a special **session** statistic shows how much gold the current character earned or spent since connection.
 
 
+## Reseting statistics or deleting characters
+
+Type `/brokercash`(or simply `/cash`) in your chat window.
+
+
 ## Configuration
 
 There is no user configurable options. Just install and enjoy!
@@ -31,9 +36,8 @@ There is no user configurable options. Just install and enjoy!
 
 ## TODO
 
-* There is currently no way to delete or reset a character's stats; I'll add this functionnality in a future release.
+* ~~There is currently no way to delete or reset a character's stats; I'll add this functionnality in a future release.~~ Done in 1.2.0
 * Add some more locales. Help welcome: just fork the [GitHub repository](https://github.com/Septh/WoW-Broker_Cash) and submit a Pull Request
-
 
 
 ## Need help?
@@ -43,6 +47,8 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 ## Change Log
 
+* Version 1.2.0 - 11/02/2016
+	* Added the ability to reset or delete a character's stats
 * Version 1.1.0 - 10/26/2016
 	* Toc update for 7.1
 * Version 1.1.0 - 10/21/2016

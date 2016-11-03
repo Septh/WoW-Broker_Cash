@@ -1,138 +1,49 @@
 
+-- Environnement
+local addonName, BrokerCash = ...
+
 -- Bibliothèques
-local addon                = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
-local L                    = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
-local libDataBroker        = LibStub('LibDataBroker-1.1')
-local libQTip              = LibStub('LibQTip-1.0')
+local addon                 = LibStub('AceAddon-3.0'):NewAddon(BrokerCash, addonName, 'AceConsole-3.0', 'AceEvent-3.0')
+local L                     = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
+local libDataBroker         = LibStub('LibDataBroker-1.1')
+local libQTip               = LibStub('LibQTip-1.0')
 
 -- Premier jour de la semaine
 local FIRST_DAY_OF_WEEK    = 2	-- Lundi
 
 -- Textures
 local tth = select(2, GameTooltipText:GetFontObject():GetFont())
-local GOLD_ICON_STRING     = ('|TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:2:0|t'):format(tth, tth)
-local SILVER_ICON_STRING   = ('|TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:2:0|t'):format(tth, tth)
-local COPPER_ICON_STRING   = ('|TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:2:0|t'):format(tth, tth)
-local PLUS_BUTTON_STRING   = ('|TInterface\\Buttons\\UI-PlusButton-Up:%d:%d:2:0|t'):format(tth, tth)
-local MINUS_BUTTON_STRING  = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|t'):format(tth, tth)
+local GOLD_ICON_STRING      = ('|TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:2:0|t'):format(tth, tth)
+local SILVER_ICON_STRING    = ('|TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:2:0|t'):format(tth, tth)
+local COPPER_ICON_STRING    = ('|TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:2:0|t'):format(tth, tth)
+local PLUS_BUTTON_STRING    = ('|TInterface\\Buttons\\UI-PlusButton-Up:%d:%d:2:0|t'):format(tth, tth)
+local MINUS_BUTTON_STRING   = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|t'):format(tth, tth)
 
 -- Montants
-local SILVER_PER_GOLD      = _G.SILVER_PER_GOLD
-local COPPER_PER_SILVER    = _G.COPPER_PER_SILVER
-local COPPER_PER_GOLD      = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
+local SILVER_PER_GOLD       = _G.SILVER_PER_GOLD
+local COPPER_PER_SILVER     = _G.COPPER_PER_SILVER
+local COPPER_PER_GOLD       = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
 
 -- Couleurs
-local COLOR_RED            = CreateColor(1.0, 0.1, 0.1, 1)
-local COLOR_RED_DIMMED     = CreateColor(0.8, 0.1, 0.1, 1)
-local COLOR_GREEN          = CreateColor(0.1, 1.0, 0.1, 1)
-local COLOR_GREEN_DIMMED   = CreateColor(0.1, 0.8, 0.1, 1)
-local COLOR_YELLOW         = CreateColor(1.0, 1.0, 0.1, 1)
-local COLOR_YELLOW_DIMMED  = CreateColor(0.8, 0.8, 0.1, 1)
+local COLOR_RED             = CreateColor(1.0, 0.1, 0.1, 1)
+local COLOR_RED_DIMMED      = CreateColor(0.8, 0.1, 0.1, 1)
+local COLOR_GREEN           = CreateColor(0.1, 1.0, 0.1, 1)
+local COLOR_GREEN_DIMMED    = CreateColor(0.1, 0.8, 0.1, 1)
+local COLOR_YELLOW          = CreateColor(1.0, 1.0, 0.1, 1)
+local COLOR_YELLOW_DIMMED   = CreateColor(0.8, 0.8, 0.1, 1)
 
 -- Personnage courant
-local currentChar          = UnitName('player')
-local currentRealm         = GetRealmName()
-local currentCharKey       = currentChar .. ' - ' .. currentRealm
-local sessionMoney         = 0
+local currentChar           = UnitName('player')
+local currentRealm          = GetRealmName()
+local currentCharKey        = currentChar .. ' - ' .. currentRealm
+local sessionMoney          = 0
 
 -- Données de tous les personnages
 local raw_db
-local allRealms, allChars  = {}, {}
-
--- Données sauvegardées
-local db_defaults = {
-	char = {
-		money     = -1,
-		since     = 0,
-		lastSaved = 0,
-		day       = 0,
-		week      = 0,
-		month     = 0,
-		year      = 0
-	}
-}
-
--- Dialogue de réinitialisation/suppression de personnages
-local dialog_config = {
-	name    = 'Broker_Cash',
-	handler = addon,
-	type    = 'group',
-	args    = {
-		infos = {
-			type   = 'group',
-			name   = L['DLGINFO0'],
-			inline = true,
-			order  = 1,
-			args   = {
-				line1 = {
-					type     = 'description',
-					name     = L['DLGINFO1'],
-					fontSize = 'medium',
-					order    = 1,
-				},
-				line2 = {
-					type     = 'description',
-					name     = string.format(YELLOW_FONT_COLOR_CODE .. '> %s' .. FONT_COLOR_CODE_CLOSE .. ' %s', L['Reset'], L['DLGINFO2']),
-					fontSize = 'medium',
-					order    = 2,
-				},
-				line3 = {
-					type     = 'description',
-					name     = string.format(YELLOW_FONT_COLOR_CODE .. '> %s' .. FONT_COLOR_CODE_CLOSE .. ' %s', L['Delete'], L['DLGINFO3']),
-					fontSize = 'medium',
-					order    = 3,
-				},
-				line4 = {
-					type     = 'description',
-					name     = string.format('\n' .. ORANGE_FONT_COLOR_CODE .. '%s' .. FONT_COLOR_CODE_CLOSE, L['DLGINFO4']),
-					fontSize = 'medium',
-					order    = 4,
-				},
-			}
-		},
-		sep1 = {
-			type  = 'header',
-			name  = '',
-			order = 2
-		},
-		--
-		-- Les royaumes sont insérés ici ultérieurement
-		--
-		sep2 = {
-			type  = 'header',
-			name  = '',
-			order = 99,
-		},
-		actions = {
-			type   = 'group',
-			name   = function() return false end,	-- Permet d'avoir un groupe sans titre ni cadre
-			inline = true,
-			order  = 100,
-			args   = {
-				count = {
-					type  = 'description',
-					name  = '',
-					width = 'fill',					-- Visiblement, une valeur magique dans AceConfigDialog-3.0
-					order = 1,
-					fontSize = 'medium',
-				},
-				reset = {
-					type  = 'execute',
-					name  = 'Reset',
-					order = 2,
-				},
-				delete = {
-					type  = 'execute',
-					name  = 'Delete',
-					order = 3,
-				},
-			}
-		}
-	}
-}
+local allRealms, allChars   = {}, {}
 
 -------------------------------------------------------------------------------
--- Fonctions diverses
+-- Fonctions utilitaires
 -------------------------------------------------------------------------------
 local function CopyTableSorted(t, f)
 	t = CopyTable(t)
@@ -149,20 +60,21 @@ local function MakeCharKey(charName, charRealm)
 	return charName .. ' - ' .. charRealm
 end
 
-local function SplitCharKey(key)
-	local name, _, realm = strsplit(' ', key, 3)
-	return name, realm
+local function SplitCharKey(charKey)
+	local charName, _, charRealm = strsplit(' ', charKey, 3)
+	return charName, charRealm
 end
 
-local function InvertCharKey(key)
-	key = key:gsub('(%S+) %- (%S+)', '%2 - %1')
-	return key
+local function InvertCharKey(charKey)
+	charKey = charKey:gsub('(%S+) %- (%S+)', '%2 - %1')
+	return charKey
 end
 
-local function GetAbsoluteMoneyString(money)
-	local gold   = math.floor(money / COPPER_PER_GOLD)
-	local silver = math.floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
-	local copper = money % COPPER_PER_SILVER
+local function GetAbsoluteMoneyString(amount)
+	-- D'après FrameXML/MoneyFrame.lua#311
+	local gold   = math.floor(amount / COPPER_PER_GOLD)
+	local silver = math.floor((amount - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = amount % COPPER_PER_SILVER
 
 	local str = string.format('%02d%s', copper, COPPER_ICON_STRING)
 	if (silver + gold) > 0 then
@@ -174,13 +86,13 @@ local function GetAbsoluteMoneyString(money)
 	return str
 end
 
-local function GetRelativeMoneyString(money)
-	if (money or 0) == 0 then
+local function GetRelativeMoneyString(amount)
+	if (amount or 0) == 0 then
 		return COLOR_YELLOW_DIMMED:WrapTextInColorCode('0')
-	elseif money < 0 then
-		return COLOR_RED_DIMMED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-money))
+	elseif amount < 0 then
+		return COLOR_RED_DIMMED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-amount))
 	else
-		return COLOR_GREEN_DIMMED:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(money))
+		return COLOR_GREEN_DIMMED:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(amount))
 	end
 end
 
@@ -188,11 +100,87 @@ end
 -- Réinitialisation/suppression de personnages
 -------------------------------------------------------------------------------
 do
+	local dialog_config = {
+		name    = 'Broker_Cash',
+		handler = addon,
+		type    = 'group',
+		args    = {
+			infos = {
+				type   = 'group',
+				name   = L['DLGINFO0'],
+				inline = true,
+				order  = 1,
+				args   = {
+					line1 = {
+						type     = 'description',
+						name     = L['DLGINFO1'],
+						fontSize = 'medium',
+						order    = 1,
+					},
+					line2 = {
+						type     = 'description',
+						name     = string.format(YELLOW_FONT_COLOR_CODE .. '> %s' .. FONT_COLOR_CODE_CLOSE .. ' %s', L['Reset'], L['DLGINFO2']),
+						fontSize = 'medium',
+						order    = 2,
+					},
+					line3 = {
+						type     = 'description',
+						name     = string.format(YELLOW_FONT_COLOR_CODE .. '> %s' .. FONT_COLOR_CODE_CLOSE .. ' %s', L['Delete'], L['DLGINFO3']),
+						fontSize = 'medium',
+						order    = 3,
+					},
+					line4 = {
+						type     = 'description',
+						name     = string.format('\n' .. ORANGE_FONT_COLOR_CODE .. '%s' .. FONT_COLOR_CODE_CLOSE, L['DLGINFO4']),
+						fontSize = 'medium',
+						order    = 4,
+					},
+				}
+			},
+			sep1 = {
+				type  = 'header',
+				name  = '',
+				order = 2
+			},
+			--
+			-- Les royaumes sont insérés ici ultérieurement
+			--
+			sep2 = {
+				type  = 'header',
+				name  = '',
+				order = 99,
+			},
+			actions = {
+				type   = 'group',
+				name   = function() return false end,	-- Permet d'avoir un groupe sans titre ni cadre
+				inline = true,
+				order  = 100,
+				args   = {
+					count = {
+						type  = 'description',
+						name  = '',
+						width = 'fill',					-- Visiblement, une valeur magique dans AceConfigDialog-3.0
+						order = 1,
+						fontSize = 'medium',
+					},
+					reset = {
+						type  = 'execute',
+						name  = L['Reset'],
+						order = 2,
+					},
+					delete = {
+						type  = 'execute',
+						name  = L['Delete'],
+						order = 3,
+					},
+				}
+			}
+		}
+	}
 	local selectedToons, numSelectedToons = nil, 0
 
+	-- Supprime les personnages sélectionnés des données sauvegardées
 	local function Dialog_DoDeleteCharacters(info, value)
-
-		-- Supprime les personnages sélectionnés des données sauvegardées
 		for key,_ in pairs(selectedToons) do
 
 			raw_db[key] = nil
@@ -220,9 +208,8 @@ do
 		LibStub('AceConfigRegistry-3.0'):NotifyChange('Broker_Cash')
 	end
 
+	-- Réinitialise les statistiques des personnages sélectionnés
 	local function Dialog_DoResetCharacters(info, value)
-
-		-- Réinitialise les données sauvegardées des personnages sélectionnés
 		for key,_ in pairs(selectedToons) do
 			raw_db[key].day   = nil
 			raw_db[key].week  = nil
@@ -231,6 +218,7 @@ do
 		end
 	end
 
+	-- Affiche une demande de confirmation avant réinitialisation/suppression
 	local function Dialog_ConfirmAction(info)
 
 		-- str = RESET_TOON(S) ou DELETE_TOON(S)
@@ -240,19 +228,19 @@ do
 		-- Construit la demande de confirmation
 		local toons = {}
 		for k,_ in pairs(selectedToons) do
-			table.insert(toons, k)
+			table.insert(toons, InvertCharKey(k))
 		end
-		table.sort(toons, function(k1, k2)
-			return InvertCharKey(k1) < InvertCharKey(k2)
-		end)
+		table.sort(toons)
 		return str .. '\n\n' .. table.concat(toons, '\n') .. '\n\n' .. L['Are you sure?']
 	end
 
+	-- Vérifie si les boutons Supprimer / Réinitialiser doivent être désactivés
 	local function Dialog_IsActionDisabled(info)
-		-- True si (aucune sélection) ou (si le bouton est Delete et le personnage courant fait partie des sélectionnés)
-		return numSelectedToons == 0 or (info[#info] == 'delete' and selectedToons[currentCharKey] == true)
+		-- True si (aucune sélection) ou (le bouton est Delete et le personnage courant fait partie des sélectionnés)
+		return numSelectedToons == 0 or (info[#info] == 'delete' and selectedToons[currentCharKey])
 	end
 
+	-- Sélectionne / désélectionne un personnage
 	local function Dialog_IsToonSelected(info, key)
 		return selectedToons[MakeCharKey(key, info[#info])]
 	end
@@ -268,13 +256,15 @@ do
 		end
 	end
 
+	-- Met à jour le nombre de personnages sélectionnés dans le dialogue
 	local function Dialog_GetNumSelected(info)
 		return string.format(L['NUMSELECTED'], numSelectedToons)
 	end
 
+	-- Affiche le dialogue de réinitialisation/suppression de personnages
 	function addon:ChatCmdHandler(msg)
 
-		-- Construit le panneau d'options si ce n'est pas déjà fait
+		-- Construit le dialogue si ce n'est pas déjà fait
 		if not selectedToons then
 			selectedToons = {}
 
@@ -301,17 +291,15 @@ do
 					order  = 10 + i
 				}
 
-				for _, name in ipairs(CopyTableSorted(allChars[realm])) do
+				for _,name in ipairs(CopyTableSorted(allChars[realm])) do
 					dialog_config.args[realm].values[name] = name
 				end
 			end
 			LibStub('AceConfig-3.0'):RegisterOptionsTable('Broker_Cash', dialog_config)
 		end
 
-		-- Aucun personnage sélectionné à l'ouverture
+		-- Affiche le dialogue, sans aucun personnage sélectionné à l'ouverture
 		numSelectedToons = #wipe(selectedToons)
-
-		-- Crée le dialogue
 		LibStub('AceConfigDialog-3.0'):Open('Broker_Cash')
 	end
 end
@@ -320,7 +308,6 @@ end
 -- Gestion du tooltip secondaire
 -------------------------------------------------------------------------------
 do
-	-- le tooltip
 	local subTooltip = nil
 
 	-- Affiche le tooltip pour un royaume
@@ -331,7 +318,7 @@ do
 
 		-- Calcule et affiche les données du royaume
 		local realmDay, realmWeek, realmMonth, realmYear = 0, 0, 0, 0
-		for key, data in pairs(raw_db) do
+		for key,data in pairs(raw_db) do
 			local name, realm = SplitCharKey(key)
 
 			if realm == selectedRealm then
@@ -450,7 +437,7 @@ do
 		addon:HideSubTooltip()
 	end
 
-	-- Affiche le tooltip secondaire
+	-- Affiche le tooltip principal
 	function addon:UpdateMainTooltip()
 
 		local mtt = mainTooltip
@@ -497,7 +484,7 @@ do
 			mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
 
 			realmMoney = 0
-			for _, name in ipairs(allChars[realm]) do
+			for _,name in ipairs(allChars[realm]) do
 
 				-- Vérifie s'il faut réinitialiser les statistiques de ce personnage
 				local key  = MakeCharKey(name, realm)
@@ -526,11 +513,11 @@ do
 			mtt:AddLine('')
 		end
 
-		-- Finit par le grand total
+		-- Ajoute le grand total
 		mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 		mtt:AddLine(L['Total'], GetAbsoluteMoneyString(totalMoney))
 
-		-- Ouf !
+		-- Fini
 		mtt:Show()
 	end
 
@@ -551,9 +538,12 @@ do
 			mainTooltip:SmartAnchorTo(LDBFrame)
 			mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 
-			-- Surligne l'icône LDB
-			highlightTexture:SetParent(LDBFrame)
-			highlightTexture:SetAllPoints(LDBFrame)
+			-- Surligne l'icône LDB, sauf si le display est Bazooka (il le fait déjà)
+			local LDBFrameName = LDBFrame:GetName() or ''
+			if not LDBFrameName:find('Bazooka', 1) then
+				highlightTexture:SetParent(LDBFrame)
+				highlightTexture:SetAllPoints(LDBFrame)
+			end
 		end
 		self:UpdateMainTooltip()
 	end
@@ -563,13 +553,9 @@ end
 -- Mise à jour des données du personnage courant à chaque gain ou perte d'argent
 -------------------------------------------------------------------------------
 do
-	-- Jour du dernier calcul des dates limites
-	local yday = nil
+	local yday, startOfDay, startOfWeek, startOfMonth, startOfYear
 
-	-- Dates limites
-	local startOfDay, startOfWeek, startOfMonth, startOfYear
-
-	function addon:CalcResetDates()
+	function CalcResetDates()
 
 		-- On recalcule seulement si on a changé de jour depuis le dernier calcul
 		local today = date('*t')
@@ -620,7 +606,7 @@ do
 	function addon:CheckStatResets(charData)
 
 		-- Calcule les dates de réinitialisation des statistiques
-		self:CalcResetDates()
+		CalcResetDates()
 
 		-- Réinitialise les stats qui ont dépassé leur date limite
 		-- (à nil plutôt que 0 pour rester consistant avec AceDB)
@@ -685,50 +671,64 @@ end
 -------------------------------------------------------------------------------
 -- Initialisation
 -------------------------------------------------------------------------------
-function addon:OnInitialize()
+do
+	local db_defaults = {
+		char = {
+			money     = -1,
+			since     = 0,
+			lastSaved = 0,
+			day       = 0,
+			week      = 0,
+			month     = 0,
+			year      = 0
+		}
+	}
 
-	-- Charge ou crée les données sauvegardées
-	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', db_defaults, true)
+	function addon:OnInitialize()
 
-	-- S'assure que les tables AceDB sont initialisées pour ce personnage (si première connexion)
-	self.db.char.since = self.db.char.since
+		-- Charge ou crée les données sauvegardées
+		self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', db_defaults, true)
 
-	-- v1.0.2: n'enregistre plus les données de folding du tooltip
-	self.db.global.folds = nil
+		-- S'assure que les tables AceDB sont initialisées pour ce personnage (si première connexion)
+		self.db.char.since = self.db.char.since
 
-	-- Recense les données de tous les personnages
-	raw_db = rawget(Broker_CashDB, 'char')
-	for key, _ in pairs(raw_db) do
-		local name, realm = SplitCharKey(key)
+		-- v1.0.2: n'enregistre plus les données de folding du tooltip
+		self.db.global.folds = nil
 
-		if not allChars[realm] then
-			allChars[realm] = {}
-			table.insert(allRealms, realm)
+		-- Recense les données de tous les personnages
+		raw_db = rawget(Broker_CashDB, 'char')
+		for key,_ in pairs(raw_db) do
+			local name, realm = SplitCharKey(key)
+
+			if not allChars[realm] then
+				allChars[realm] = {}
+				table.insert(allRealms, realm)
+			end
+			table.insert(allChars[realm], name)
 		end
-		table.insert(allChars[realm], name)
+
+		-- Trie les royaumes par ordre alphabétique, le royaume courant en premier
+		table.sort(allRealms, function(r1, r2)
+			if r1 == currentRealm then
+				return true
+			elseif r2 == currentRealm then
+				return false
+			else
+				return r1 < r2
+			end
+		end)
+
+		-- Crée l'icône LDB
+		self.dataObject = libDataBroker:NewDataObject('Broker_Cash', {
+			type    = 'data source',
+			icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
+			text    = 'Cash',
+			OnEnter = function(f) addon:ShowMainTooltip(f) end
+		})
+
+		-- Commandes
+		self:RegisterChatCommand('brokercash', 'ChatCmdHandler')
+		self:RegisterChatCommand('bcash',      'ChatCmdHandler')
+		self:RegisterChatCommand('cash',       'ChatCmdHandler')
 	end
-
-	-- Trie les royaumes -- les personnages sont triés lors de chaque affichage du tooltip
-	table.sort(allRealms, function(r1, r2)
-		if r1 == currentRealm then
-			return true
-		elseif r2 == currentRealm then
-			return false
-		else
-			return r1 < r2
-		end
-	end)
-
-	-- Crée l'icône LDB
-	self.dataObject = libDataBroker:NewDataObject('Broker_Cash', {
-		type    = 'data source',
-		icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
-		text    = 'Cash',
-		OnEnter = function(f) addon:ShowMainTooltip(f) end
-	})
-
-	-- Commandes
-	self:RegisterChatCommand('brokercash', 'ChatCmdHandler')
-	self:RegisterChatCommand('bcash',      'ChatCmdHandler')
-	self:RegisterChatCommand('cash',       'ChatCmdHandler')
 end

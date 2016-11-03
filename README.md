@@ -3,7 +3,7 @@
 
 ## Purpose
 
-Broker: Cash is a LibDataBroker plugin that remembers all your characters gold balance along with daily, weekly, monthly and yearly variations.
+**Broker: Cash** is a LibDataBroker plugin that remembers all your characters gold balance along with daily, weekly, monthly and yearly variations.
 
 This addon requires a LDB display such as [ChocolateBar](https://mods.curse.com/addons/wow/chocolatebar) (my favorite) or [Bazooka](https://mods.curse.com/addons/wow/bazooka) or whichever you prefer.
 
@@ -12,21 +12,21 @@ Currently available in English (default) and French.
 
 ## Details
 
-Broker: Cash does not maintain a full history of your gold gains and losses; it merely keeps tracks of the *variations* of your gold balance.
+**Broker: Cash** does not maintain a full history of your gold gains and losses; it merely keeps tracks of the *variations* of your gold balance.
 
 * **Daily**: variation since midnight
-* **Weekly**: variation since past monday at midnight
+* **Weekly**: variation since last monday at midnight
 * **Monthly**: variation since the 1st of the current month at midnight
 * **Yearly**: variation since January, 1st of the current year at midnight
 
-Each stat is reset to 0 at the beginning of the corresponding period.
+Each stat is reset to 0 at the beginning of the corresponding period. You may also reset any character's stats at anytime using the `/brokercash` command - see below.
 
 Also, a special **session** statistic shows how much gold the current character earned or spent since connection.
 
 
 ## Reseting statistics or deleting characters
 
-Type `/brokercash`(or simply `/cash`) in your chat window.
+Starting with 1.2.0, **Broker: Cash** allows you to reset or delete the statistics for any character it knows. Type `/brokercash` (or `/bcash` or simply `/cash`) in your chat window to access this function.
 
 
 ## Configuration
@@ -36,7 +36,6 @@ There is no user configurable options. Just install and enjoy!
 
 ## TODO
 
-* ~~There is currently no way to delete or reset a character's stats; I'll add this functionnality in a future release.~~ Done in 1.2.0
 * Add some more locales. Help welcome: just fork the [GitHub repository](https://github.com/Septh/WoW-Broker_Cash) and submit a Pull Request
 
 
@@ -47,18 +46,20 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 ## Change Log
 
-* Version 1.2.0 - 11/02/2016
+* Version 1.2.1 - 2016/11/03
+	* Don't highlight the LDB frame if the display is Bazooka
+	* Forgot to localize the dialog buttons
+* Version 1.2.0 - 2016/11/02
 	* Added the ability to reset or delete a character's stats
-* Version 1.1.0 - 10/26/2016
+* Version 1.1.0 - 2016/10/26
 	* Toc update for 7.1
-* Version 1.1.0 - 10/21/2016
+* Version 1.1.0 - 2016/10/21
 	* Also show wealth variation per realm
-* Version 1.0.3 - 10/21/2016
+* Version 1.0.3 - 2016/10/21
 	* Use `BreakUpLargeNumbers()` for a nicer main LDB text
-	* Updated Readme.md
-* Version 1.0.2 - 10/20/2016
+* Version 1.0.2 - 2016/10/20
 	* Fix Lua errors when connecting a char for the first time
-* Version 1.0.1 - 10/17/2016
+* Version 1.0.1 - 2016/10/17
 	* Highlight LDB frame on show tooltip
 * Version 1.0.0
 	* Initial release

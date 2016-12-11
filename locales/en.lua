@@ -19,6 +19,7 @@ L['Month'] = 'This month'
 L['Year'] = 'This year'
 
 -- Dialog
+L['Database'] = true
 L['Reset'] = true
 L['Delete'] = true
 L['DLGINFO0'] = 'Notice'
@@ -32,3 +33,10 @@ L['RESET_TOONS'] = 'Reset %d toons:'
 L['DELETE_TOON'] = 'Delete this toon:'
 L['DELETE_TOONS'] = 'Delete %d toons:'
 L['Are you sure?'] = true
+
+L['Options'] = true
+L['Options_LDB'] = 'LDB Display'
+L['Options_Menu'] = 'Dropdown Menu'
+L['DLGINFO10'] = 'You may want to hide the silver and copper parts of every money string displayed by Broker_Cash, but please note that these parts will be shown anyway if the gold part is zero.'
+L['Show Copper'] = true
+L['Show Silver'] = true

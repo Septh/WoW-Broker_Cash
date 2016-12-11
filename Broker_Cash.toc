@@ -1,15 +1,13 @@
 ## Interface: 70100
 ## Title: Broker: Cash
 ## Notes: Keep track of your gold incomes and outcomes
-## Version: 1.2.1
+## Version: 1.3.0
 ## Author: Septh
 ## OptionalDeps: !Swatter
 ## SavedVariables: Broker_CashDB
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
-# libs\ChatThrottleLib\ChatThrottleLib.lua
-
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
@@ -17,7 +15,6 @@ libs\AceDB-3.0\AceDB-3.0.xml
 libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\AceConfig-3.0\AceConfig-3.0.xml
-libs\AceConfig-3.0\AceConfigDialog-3.0.xml
 libs\AceLocale-3.0\AceLocale-3.0.xml
 
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua

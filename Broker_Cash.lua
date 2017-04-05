@@ -34,7 +34,7 @@ local sessionMoney   = 0
 local allRealms, allChars = {}, {}
 
 -- Données sauvegardées
-local sv, chars, opts
+local sv, opts
 local db_defaults = {
 	char = {
 		money     = 0,
@@ -232,6 +232,8 @@ function InvertCharKey(charKey)
 end
 
 function GetAbsoluteMoneyString(amount, showCopper, showSilver)
+	amount = amount or 0
+
 	-- D'après FrameXML/MoneyFrame.lua#311
 	local gold   = math.floor(amount / COPPER_PER_GOLD)
 	local silver = math.floor((amount - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
@@ -254,9 +256,9 @@ function GetRelativeMoneyString(amount, showCopper, showSilver)
 	if (amount or 0) == 0 then
 		return COLOR_YELLOW:WrapTextInColorCode('0')
 	elseif amount < 0 then
-		return COLOR_RED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-amount, showSilver, showCopper))
+		return COLOR_RED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-amount, showCopper, showSilver))
 	else
-		return COLOR_GREEN:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(amount, showSilver, showCopper))
+		return COLOR_GREEN:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(amount, showCopper, showSilver))
 	end
 end
 
@@ -408,17 +410,17 @@ function Broker_Cash:ShowRealmTooltip(realmLineFrame, selectedRealm)
 		local name, realm = SplitCharKey(key)
 
 		if realm == selectedRealm then
-			realmDay   = realmDay   + (data['day']   or 0)
-			realmWeek  = realmWeek  + (data['week']  or 0)
-			realmMonth = realmMonth + (data['month'] or 0)
-			realmYear  = realmYear  + (data['year']  or 0)
+			realmDay   = realmDay   + (data.day   or 0)
+			realmWeek  = realmWeek  + (data.week  or 0)
+			realmMonth = realmMonth + (data.month or 0)
+			realmYear  = realmYear  + (data.year  or 0)
 		end
 	end
 
-	stt:AddLine(L['Day'],   GetRelativeMoneyString(realmDay),   opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Week'],  GetRelativeMoneyString(realmWeek),  opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Month'], GetRelativeMoneyString(realmMonth), opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Year'],  GetRelativeMoneyString(realmYear),  opts.menu.showCopper, opts.menu.showSilver)
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(realmDay,   opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(realmWeek,  opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(realmMonth, opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(realmYear,  opts.menu.showCopper, opts.menu.showSilver))
 	stt:Show()
 end
 
@@ -440,10 +442,10 @@ function Broker_Cash:ShowCharTooltip(charLineFrame, selectedCharKey)
 	if selectedCharKey == currentCharKey then
 		stt:AddLine(L['Session'], GetRelativeMoneyString(sessionMoney), opts.menu.showCopper, opts.menu.showSilver)
 	end
-	stt:AddLine(L['Day'],   GetRelativeMoneyString(data.day),   opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Week'],  GetRelativeMoneyString(data.week),  opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Month'], GetRelativeMoneyString(data.month), opts.menu.showCopper, opts.menu.showSilver)
-	stt:AddLine(L['Year'],  GetRelativeMoneyString(data.year),  opts.menu.showCopper, opts.menu.showSilver)
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(data.day,   opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(data.week,  opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(data.month, opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(data.year,  opts.menu.showCopper, opts.menu.showSilver))
 	stt:Show()
 end
 
@@ -527,11 +529,11 @@ function Broker_Cash:UpdateMainTooltip()
 	-- Personnage courant en premier
 	mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, opts.menu.showCopper, opts.menu.showSilver))
 	mtt:AddLine()
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Session'], GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       opts.menu.showCopper, opts.menu.showSilver),       GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Day'],     GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   opts.menu.showCopper, opts.menu.showSilver),   GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Week'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  opts.menu.showCopper, opts.menu.showSilver),  GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Session'], GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Day'],     GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Week'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
 	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Month'],   GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month, opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Year'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  opts.menu.showCopper, opts.menu.showSilver),  GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Year'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
 	mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
 	-- Ajoute tous les personnages, royaume par royaume
@@ -540,7 +542,7 @@ function Broker_Cash:UpdateMainTooltip()
 
 		-- Trie les personnages du royaume par ordre décroissant de richesse
 		table.sort(allChars[realm], function(n1, n2)
-			return sv.char[n1 .. ' - ' .. realm].money > sv.char[n2 .. ' - ' .. realm].money
+			return ((sv.char[n1 .. ' - ' .. realm].money) or 0) > ((sv.char[n2 .. ' - ' .. realm].money) or 0)
 		end)
 
 		-- 1/ Nom du royaume + nombre de personnages (la richesse est ajoutée après la boucle)
@@ -555,19 +557,21 @@ function Broker_Cash:UpdateMainTooltip()
 		-- Gestion du clic sur cette ligne
 		mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
 
+		-- 2/ Tous les personnages de ce royaume
 		realmMoney = 0
 		for _,name in ipairs(allChars[realm]) do
 
 			-- Vérifie s'il faut réinitialiser les statistiques de ce personnage
 			local key  = MakeCharKey(name, realm)
 			local data = sv.char[key]
+			local money = data.money or 0
 			self:CheckStatResets(data)
 
 			if unfoldedRealms[realm] then
 				-- Ajoute le personnage (avec une marge à gauche)
 				ln = mtt:AddLine()
 				mtt:SetCell(ln, 1, name, 1, 20)
-				mtt:SetCell(ln, 2, GetAbsoluteMoneyString(data.money, opts.menu.showCopper, opts.menu.showSilver))
+				mtt:SetCell(ln, 2, GetAbsoluteMoneyString(money, opts.menu.showCopper, opts.menu.showSilver))
 
 				-- Gestion du second tooltip pour cette ligne
 				mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, key)
@@ -575,8 +579,8 @@ function Broker_Cash:UpdateMainTooltip()
 			end
 
 			-- Comptabilise la richesse par royaume / totale
-			realmMoney = realmMoney + data.money
-			totalMoney = totalMoney + data.money
+			realmMoney = realmMoney + money
+			totalMoney = totalMoney + money
 		end
 
 		-- 3/ Richesse de ce royaume
@@ -632,7 +636,7 @@ local function days_in_month(m, y)
 	return date('*t', time( { year = y, month = m + 1, day = 0 } ))['day']
 end
 
-function CalcResetDates()
+local function CalcResetDates()
 
 	-- On recalcule seulement si on a changé de jour depuis le dernier calcul
 	local today = date('*t')
@@ -651,7 +655,7 @@ function CalcResetDates()
 	limit.day   = today.day
 	limit.month = today.month
 	limit.year  = today.year
-	startOfDay = time(limit)
+	startOfDay  = time(limit)
 
 	-- Début de la semaine courante
 	limit.day   = today.day - (today.wday >= FIRST_DAY_OF_WEEK and (today.wday - FIRST_DAY_OF_WEEK) or (7 - today.wday))
@@ -668,9 +672,9 @@ function CalcResetDates()
 	startOfWeek = time(limit)
 
 	-- Début du mois courant
-	limit.day   = 1
-	limit.month = today.month
-	limit.year  = today.year
+	limit.day    = 1
+	limit.month  = today.month
+	limit.year   = today.year
 	startOfMonth = time(limit)
 
 	-- Début de l'année courante
@@ -749,11 +753,13 @@ function Broker_Cash:OnInitialize()
 
 	-- Charge ou crée les données sauvegardées
 	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', db_defaults, true)
-	local _ = self.db.char.dummy	-- S'assure que les tables AceDB sont initialisées pour ce personnage (si première connexion)
+	do
+		-- S'assure que les tables AceDB sont initialisées (si première utilisation de l'add-on)
+		local _ = self.db.char.dummy
+	end
 
 	-- Garde une référence sur les données sauvegardées
 	sv = rawget(self.db, 'sv')
-	char = self.db.char
 	opts = self.db.global
 
 	-- Recense et trie tous les personnages connus

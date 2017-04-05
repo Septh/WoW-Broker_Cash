@@ -14,6 +14,7 @@ Currently available in English (default) and French.
 
 **Broker: Cash** does not maintain a full history of your gold gains and losses; it merely keeps tracks of the *variations* of your gold balance on predefined periods of time.
 
+* **Session**: variation since connected
 * **Daily**: variation since midnight
 * **Weekly**: variation since last monday at midnight
 * **Monthly**: variation since the 1st of the current month at midnight
@@ -21,10 +22,9 @@ Currently available in English (default) and French.
 
 Each stat is reset to 0 at the beginning of the corresponding period. You may also reset any character's stats at any time using the `/brokercash` command - see below.
 
-Also, a special **session** statistic shows how much gold the current character earned or spent since connection.
 
 
-## Resetting statistics or deleting characters
+## Resetting or deleting statistics
 
 Starting with 1.2.0, **Broker: Cash** allows you to reset or delete the statistics for any character it knows. Type `/brokercash` (or `/bcash` or simply `/cash`) in your chat window to access this feature.
 
@@ -46,6 +46,12 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 ## Change Log
 
+* Version 1.3.2 - 2017/04/05
+	* Fixed a stupid bug that prevented the display of copper and silver amounts in sub-tooltip
+	* Removed an unwanted global
+* Version 1.3.1 - 2017/03/29
+	* Fixed a bug that occured when a char spent all his money
+	* Toc update for 7.2
 * Version 1.3.0 - 2016/12/11
 	* Added options to hide copper and silver amounts in both the LDB frame and the dropdown menu
 * Version 1.2.1 - 2016/11/03

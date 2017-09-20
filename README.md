@@ -46,6 +46,9 @@ I rarely read comments here on Curse.com; should you need any help, you'd better
 
 ## Change Log
 
+* Version 1.3.3 - 2017/09/21
+	* Toc update for 7.3
+	* Using the latest Ace3 files (r1166)
 * Version 1.3.2 - 2017/04/05
 	* Fixed a stupid bug that prevented the display of copper and silver amounts in sub-tooltip
 	* Removed an unwanted global

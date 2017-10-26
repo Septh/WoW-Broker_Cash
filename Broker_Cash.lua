@@ -1,12 +1,24 @@
 
+-- Upvalues
+-- GLOBALS: LibStub
+local tInsert, tRemove, tSort = table.insert, table.remove, table.sort
+local floor = math.floor
+
+local GetAddOnMetadata, UnitName, GetRealmName = GetAddOnMetadata, UnitName, GetRealmName
+local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
+local CreateColor, tDeleteItem = CreateColor, tDeleteItem
+local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall
+
 -- Environnement
-local Broker_Cash   = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
+local _, addonTable = ...
+local Broker_Cash   = LibStub('AceAddon-3.0'):NewAddon(addonTable, 'Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
 local L             = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
 local libDataBroker = LibStub('LibDataBroker-1.1')
 local libQTip       = LibStub('LibQTip-1.0')
 
 -- Premier jour de la semaine
 local FIRST_DAY_OF_WEEK = 2	-- Lundi
+local yday, startOfDay, startOfWeek, startOfMonth, startOfYear
 
 -- Textures
 local tth = select(2, GameTooltipText:GetFontObject():GetFont())
@@ -17,9 +29,9 @@ local PLUS_BUTTON_STRING  = ('|TInterface\\Buttons\\UI-PlusButton-Up:%d:%d:2:0|t
 local MINUS_BUTTON_STRING = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|t'):format(tth, tth)
 
 -- Montants
-local SILVER_PER_GOLD   = _G.SILVER_PER_GOLD
-local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
-local COPPER_PER_GOLD   = _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD
+local SILVER_PER_GOLD   = SILVER_PER_GOLD
+local COPPER_PER_SILVER = COPPER_PER_SILVER
+local COPPER_PER_GOLD   = COPPER_PER_SILVER * SILVER_PER_GOLD
 
 -- Couleurs
 local COLOR_RED    = CreateColor(0.8, 0.1, 0.1, 1)
@@ -49,10 +61,12 @@ local db_defaults = {
 		ldb = {
 			showCopper  = true,
 			showSilver  = true,
+			showSilverAndCopper = true,
 		},
 		menu = {
 			showCopper = true,
 			showSilver = true,
+			showSilverAndCopper = true,
 		}
 	}
 }
@@ -67,7 +81,7 @@ local dialog_config = {
 		options = {
 			name  = L['Options'],
 			type  = 'group',
-			order = 2,
+			order = 1,
 			get   = 'Dialog_GetOpt',
 			set   = 'Dialog_SetOpt',
 			args  = {
@@ -86,15 +100,11 @@ local dialog_config = {
 					inline = true,
 					order  = 10,
 					args   = {
-						showSilver = {
-							name  = L['Show Silver'],
+						showSilverAndCopper = {
+							name  = L['Show Silver and Copper'],
 							type  = 'toggle',
+							width = 'full',
 							order = 1,
-						},
-						showCopper = {
-							name  = L['Show Copper'],
-							type  = 'toggle',
-							order = 2,
 						},
 					},
 				},
@@ -104,15 +114,11 @@ local dialog_config = {
 					inline = true,
 					order  = 20,
 					args   = {
-						showSilver = {
-							name  = L['Show Silver'],
-							type  = 'toggle',
+						showSilverAndCopper = {
+							name = L['Show Silver and Copper'],
+							type = 'toggle',
+							width = 'full',
 							order = 1,
-						},
-						showCopper = {
-							name  = L['Show Copper'],
-							type  = 'toggle',
-							order = 2,
 						},
 					},
 				},
@@ -121,7 +127,7 @@ local dialog_config = {
 		database = {
 			name  = L['Database'],
 			type  = 'group',
-			order = 1,
+			order = 2,
 			args  = {
 				infos = {
 					type   = 'group',
@@ -217,48 +223,55 @@ highlightTexture:Hide()
 -------------------------------------------------------------------------------
 -- Fonctions utilitaires
 -------------------------------------------------------------------------------
-function MakeCharKey(charName, charRealm)
+local function MakeCharKey(charName, charRealm)
 	return charName .. ' - ' .. charRealm
 end
 
-function SplitCharKey(charKey)
+local function SplitCharKey(charKey)
 	local charName, charRealm = strsplit('-', charKey, 2)
 	return strtrim(charName), strtrim(charRealm)
 end
 
-function InvertCharKey(charKey)
+local function InvertCharKey(charKey)
 	charKey = charKey:gsub('(%S+) %- (%S+)', '%2 - %1')
 	return charKey
 end
 
-function GetAbsoluteMoneyString(amount, showCopper, showSilver)
+local function days_in_month(m, y)
+	-- http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
+	return date('*t', time( { year = y, month = m + 1, day = 0 } ))['day']
+end
+
+local function GetAbsoluteMoneyString(amount, opts)
 	amount = amount or 0
 
 	-- D'après FrameXML/MoneyFrame.lua#311
-	local gold   = math.floor(amount / COPPER_PER_GOLD)
-	local silver = math.floor((amount - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local gold   = floor(amount / COPPER_PER_GOLD)
+	local silver = floor((amount - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
 	local copper = amount % COPPER_PER_SILVER
 
-	local str = ''
-	if gold == 0 or showCopper then
-		str = string.format('%02d%s', copper, COPPER_ICON_STRING)
-	end
-	if (gold == 0 and silver > 0) or showSilver then
-		str = string.format('%02d%s ', silver, SILVER_ICON_STRING) .. str
-	end
+	local tbl = {}
 	if gold > 0 then
-		str = string.format('%s%s ', BreakUpLargeNumbers(gold), GOLD_ICON_STRING) .. str
+		tInsert(tbl, BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING)
 	end
-	return str
+	if opts.showSilverAndCopper or gold == 0 then
+		if silver > 0 then
+			tInsert(tbl, silver .. SILVER_ICON_STRING)
+			tInsert(tbl, copper .. COPPER_ICON_STRING)
+		else
+			tInsert(tbl, copper .. COPPER_ICON_STRING)
+		end
+	end
+	return table.concat(tbl, ' ')
 end
 
-function GetRelativeMoneyString(amount, showCopper, showSilver)
+local function GetRelativeMoneyString(amount, opts)
 	if (amount or 0) == 0 then
 		return COLOR_YELLOW:WrapTextInColorCode('0')
 	elseif amount < 0 then
-		return COLOR_RED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-amount, showCopper, showSilver))
+		return COLOR_RED:WrapTextInColorCode('-' .. GetAbsoluteMoneyString(-amount, opts))
 	else
-		return COLOR_GREEN:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(amount, showCopper, showSilver))
+		return COLOR_GREEN:WrapTextInColorCode('+' .. GetAbsoluteMoneyString(amount, opts))
 	end
 end
 
@@ -316,9 +329,9 @@ function Broker_Cash:Dialog_ConfirmAction(info)
 	-- Construit la demande de confirmation
 	local toons = {}
 	for k in pairs(selectedToons) do
-		table.insert(toons, k)
+		tInsert(toons, k)
 	end
-	table.sort(toons, function(t1, t2)
+	tSort(toons, function(t1, t2)
 		return InvertCharKey(t1) < InvertCharKey(t2)
 	end)
 	return str .. '\n\n' .. table.concat(toons, '\n') .. '\n\n' .. L['Are you sure?']
@@ -352,11 +365,11 @@ function Broker_Cash:Dialog_GetNumSelected(info)
 end
 
 function Broker_Cash:Dialog_GetOpt(info)
-	return opts[info[#info-1]][info[#info]]			-- opts['ldb'|'menu']['showCopper'|'showSilver']
+	return opts[info[#info-1]][info[#info]]			-- opts['ldb'|'menu']['showSilverAndCopper']
 end
 
 function Broker_Cash:Dialog_SetOpt(info, value)
-	opts[info[#info-1]][info[#info]] = value		-- opts['ldb'|'menu']['showCopper'|'showSilver']
+	opts[info[#info-1]][info[#info]] = value		-- opts['ldb'|'menu']['showSilverAndCopper']
 
 	-- Rafraîchit le menu
 	if info[#info-1] == 'ldb' then
@@ -399,6 +412,8 @@ end
 -------------------------------------------------------------------------------
 -- Gestion du tooltip secondaire
 -------------------------------------------------------------------------------
+
+-- Affiche le tooltip pour un royaume
 function Broker_Cash:ShowRealmTooltip(realmLineFrame, selectedRealm)
 
 	-- Affiche le tooltip
@@ -417,13 +432,14 @@ function Broker_Cash:ShowRealmTooltip(realmLineFrame, selectedRealm)
 		end
 	end
 
-	stt:AddLine(L['Day'],   GetRelativeMoneyString(realmDay,   opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Week'],  GetRelativeMoneyString(realmWeek,  opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Month'], GetRelativeMoneyString(realmMonth, opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Year'],  GetRelativeMoneyString(realmYear,  opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(realmDay,   opts.menu))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(realmWeek,  opts.menu))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(realmMonth, opts.menu))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(realmYear,  opts.menu))
 	stt:Show()
 end
 
+-------------------------------------------------------------------------------
 -- Affiche le tooltip pour un personnage
 function Broker_Cash:ShowCharTooltip(charLineFrame, selectedCharKey)
 
@@ -440,16 +456,16 @@ function Broker_Cash:ShowCharTooltip(charLineFrame, selectedCharKey)
 	stt:AddLine(''); stt:AddSeparator(); stt:AddLine('')
 
 	if selectedCharKey == currentCharKey then
-		stt:AddLine(L['Session'], GetRelativeMoneyString(sessionMoney), opts.menu.showCopper, opts.menu.showSilver)
+		stt:AddLine(L['Session'], GetRelativeMoneyString(sessionMoney), opts.menu)
 	end
-	stt:AddLine(L['Day'],   GetRelativeMoneyString(data.day,   opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Week'],  GetRelativeMoneyString(data.week,  opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Month'], GetRelativeMoneyString(data.month, opts.menu.showCopper, opts.menu.showSilver))
-	stt:AddLine(L['Year'],  GetRelativeMoneyString(data.year,  opts.menu.showCopper, opts.menu.showSilver))
+	stt:AddLine(L['Day'],   GetRelativeMoneyString(data.day,   opts.menu))
+	stt:AddLine(L['Week'],  GetRelativeMoneyString(data.week,  opts.menu))
+	stt:AddLine(L['Month'], GetRelativeMoneyString(data.month, opts.menu))
+	stt:AddLine(L['Year'],  GetRelativeMoneyString(data.year,  opts.menu))
 	stt:Show()
 end
 
--- Affiche le tooltip secondaire
+-------------------------------------------------------------------------------
 function Broker_Cash:HideSubTooltip()
 	if subTooltip then
 		subTooltip:Release()
@@ -457,6 +473,7 @@ function Broker_Cash:HideSubTooltip()
 	subTooltip = nil
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:ShowSubTooltip(mainTooltipLine)
 
 	-- Affiche (ou déplace) le sous-tooltip
@@ -527,13 +544,13 @@ function Broker_Cash:UpdateMainTooltip()
 	mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
 	-- Personnage courant en premier
-	mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, opts.menu.showCopper, opts.menu.showSilver))
+	mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, opts.menu))
 	mtt:AddLine()
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Session'], GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Day'],     GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Week'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Month'],   GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month, opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Year'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  opts.menu.showCopper, opts.menu.showSilver), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Session'], GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       opts.menu), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Day'],     GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   opts.menu), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Week'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  opts.menu), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Month'],   GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month, opts.menu), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Year'],    GameTooltipTextSmall, 1, 10); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  opts.menu), GameTooltipTextSmall)
 	mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
 	-- Ajoute tous les personnages, royaume par royaume
@@ -541,7 +558,7 @@ function Broker_Cash:UpdateMainTooltip()
 	for _,realm in ipairs(allRealms) do
 
 		-- Trie les personnages du royaume par ordre décroissant de richesse
-		table.sort(allChars[realm], function(n1, n2)
+		tSort(allChars[realm], function(n1, n2)
 			return ((sv.char[n1 .. ' - ' .. realm].money) or 0) > ((sv.char[n2 .. ' - ' .. realm].money) or 0)
 		end)
 
@@ -560,18 +577,18 @@ function Broker_Cash:UpdateMainTooltip()
 		-- 2/ Tous les personnages de ce royaume
 		realmMoney = 0
 		for _,name in ipairs(allChars[realm]) do
-
-			-- Vérifie s'il faut réinitialiser les statistiques de ce personnage
 			local key  = MakeCharKey(name, realm)
 			local data = sv.char[key]
 			local money = data.money or 0
+
+			-- Vérifie s'il faut réinitialiser les statistiques de ce personnage
 			self:CheckStatResets(data)
 
+			-- Ajoute le personnage (avec une marge à gauche)
 			if unfoldedRealms[realm] then
-				-- Ajoute le personnage (avec une marge à gauche)
 				ln = mtt:AddLine()
 				mtt:SetCell(ln, 1, name, 1, 20)
-				mtt:SetCell(ln, 2, GetAbsoluteMoneyString(money, opts.menu.showCopper, opts.menu.showSilver))
+				mtt:SetCell(ln, 2, GetAbsoluteMoneyString(money, opts.menu))
 
 				-- Gestion du second tooltip pour cette ligne
 				mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, key)
@@ -584,19 +601,20 @@ function Broker_Cash:UpdateMainTooltip()
 		end
 
 		-- 3/ Richesse de ce royaume
-		mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney, opts.menu.showCopper, opts.menu.showSilver))
+		mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney, opts.menu))
 		mtt:SetCellTextColor(rln, 2, COLOR_YELLOW:GetRGBA())
 		mtt:AddLine('')
 	end
 
 	-- Ajoute le grand total
 	mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
-	mtt:AddLine(L['Total'], GetAbsoluteMoneyString(totalMoney, opts.menu.showCopper, opts.menu.showSilver))
+	mtt:AddLine(L['Total'], GetAbsoluteMoneyString(totalMoney, opts.menu))
 
 	-- Fini
 	mtt:Show()
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:HideMainTooltip()
 	self:HideSubTooltip()
 	if mainTooltip then
@@ -609,6 +627,7 @@ function Broker_Cash:HideMainTooltip()
 	mainTooltip = nil
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:ShowMainTooltip(LDBFrame)
 	if not mainTooltip then
 		mainTooltip = libQTip:Acquire('BrokerCash_MainTooltip', 2, 'LEFT', 'RIGHT')
@@ -629,13 +648,6 @@ end
 -------------------------------------------------------------------------------
 -- Mise à jour des données du personnage courant à chaque gain ou perte d'argent
 -------------------------------------------------------------------------------
-local yday, startOfDay, startOfWeek, startOfMonth, startOfYear
-
-local function days_in_month(m, y)
-	-- http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
-	return date('*t', time( { year = y, month = m + 1, day = 0 } ))['day']
-end
-
 local function CalcResetDates()
 
 	-- On recalcule seulement si on a changé de jour depuis le dernier calcul
@@ -684,6 +696,7 @@ local function CalcResetDates()
 	startOfYear = time(limit)
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:CheckStatResets(charData)
 
 	-- Calcule les dates de réinitialisation des statistiques
@@ -698,6 +711,7 @@ function Broker_Cash:CheckStatResets(charData)
 	if charLastSaved < startOfYear  then charData.year  = nil end 	-- Annuelle
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:PLAYER_MONEY()
 
 	-- Vérifie s'il faut réinitialiser les statistiques
@@ -719,7 +733,7 @@ function Broker_Cash:PLAYER_MONEY()
 	self.db.char.lastSaved = time()
 
 	-- Met à jour le texte du LDB
-	self.dataObject.text = GetAbsoluteMoneyString(money, opts.ldb.showCopper, opts.ldb.showSilver)
+	self.dataObject.text = GetAbsoluteMoneyString(money, opts.ldb)
 end
 
 -------------------------------------------------------------------------------
@@ -742,6 +756,7 @@ function Broker_Cash:OnEnable()
 	self:RegisterEvent('PLAYER_MONEY')
 end
 
+-------------------------------------------------------------------------------
 function Broker_Cash:OnDisable()
 	self:HideMainTooltip()
 end
@@ -753,10 +768,16 @@ function Broker_Cash:OnInitialize()
 
 	-- Charge ou crée les données sauvegardées
 	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', db_defaults, true)
-	do
-		-- S'assure que les tables AceDB sont initialisées (si première utilisation de l'add-on)
-		local _ = self.db.char.dummy
-	end
+	local _ = self.db.char.dummy	-- S'assure que les tables AceDB sont initialisées (si première utilisation de l'add-on)
+
+	-- => v1.3.4
+	-- self.db.global.ldb.showSilverAndCopper = self.db.global.ldb.showSilver or self.db.global.ldb.showCopper
+	-- self.db.global.ldb.showSilver = db_defaults.global.ldb.showSilver
+	-- self.db.global.ldb.showCopper = db_defaults.global.ldb.showCopper
+
+	-- self.db.global.menu.showSilverAndCopper = self.db.global.menu.showSilver or self.db.global.menu.showCopper
+	-- self.db.global.menu.showSilver = db_defaults.global.menu.showSilver
+	-- self.db.global.menu.showCopper = db_defaults.global.menu.showCopper
 
 	-- Garde une référence sur les données sauvegardées
 	sv = rawget(self.db, 'sv')
@@ -767,15 +788,15 @@ function Broker_Cash:OnInitialize()
 		local name, realm = SplitCharKey(key)
 
 		if allChars[realm] then
-			table.insert(allChars[realm], name)
+			tInsert(allChars[realm], name)
 		else
 			allChars[realm] = { name }
-			table.insert(allRealms, realm)
+			tInsert(allRealms, realm)
 		end
 	end
 
 	-- Trie les royaumes par ordre alphabétique, le royaume courant en premier
-	table.sort(allRealms, function(r1, r2)
+	tSort(allRealms, function(r1, r2)
 		if r1 == currentRealm then
 			return true
 		elseif r2 == currentRealm then

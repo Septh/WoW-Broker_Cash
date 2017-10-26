@@ -3,9 +3,9 @@
 
 ## Purpose
 
-**Broker: Cash** is a LibDataBroker plugin that remembers all your characters gold balance along with daily, weekly, monthly and yearly variations.
+**Broker: Cash** is a LibDataBroker (LDB) plugin that remembers all your characters gold balance along with daily, weekly, monthly and yearly variations.
 
-This addon requires a LDB display such as [ChocolateBar](https://mods.curse.com/addons/wow/chocolatebar) (my favorite) or [Bazooka](https://mods.curse.com/addons/wow/bazooka) or whichever you prefer.
+This addon *requires* a LDB display such as [ChocolateBar](https://mods.curse.com/addons/wow/chocolatebar) (my favorite) or [Bazooka](https://mods.curse.com/addons/wow/bazooka) or whichever you prefer.
 
 Currently available in English (default) and French.
 
@@ -42,38 +42,6 @@ Starting with 1.3.0, **Broker: Cash** allows you to hide the copper and silver a
 ## Need help?
 
 I rarely read comments here on Curse.com; should you need any help, you'd better open an issue on [GitHub](https://github.com/Septh/WoW-Broker_Cash), where the projet lives.
-
-
-## Change Log
-
-* Version 1.3.3 - 2017/09/21
-	* Toc update for 7.3
-	* Using the latest Ace3 files (r1166)
-* Version 1.3.2 - 2017/04/05
-	* Fixed a stupid bug that prevented the display of copper and silver amounts in sub-tooltip
-	* Removed an unwanted global
-* Version 1.3.1 - 2017/03/29
-	* Fixed a bug that occured when a char spent all his money
-	* Toc update for 7.2
-* Version 1.3.0 - 2016/12/11
-	* Added options to hide copper and silver amounts in both the LDB frame and the dropdown menu
-* Version 1.2.1 - 2016/11/03
-	* Don't highlight the LDB frame if the display is Bazooka
-	* Forgot to localize the dialog buttons
-* Version 1.2.0 - 2016/11/02
-	* Added the ability to reset or delete a character's stats
-* Version 1.1.0 - 2016/10/26
-	* Toc update for 7.1
-* Version 1.1.0 - 2016/10/21
-	* Also show wealth variation per realm
-* Version 1.0.3 - 2016/10/21
-	* Use `BreakUpLargeNumbers()` for a nicer main LDB text
-* Version 1.0.2 - 2016/10/20
-	* Fix Lua errors when connecting a char for the first time
-* Version 1.0.1 - 2016/10/17
-	* Highlight LDB frame on show tooltip
-* Version 1.0.0
-	* Initial release
 
 
 ## Licence

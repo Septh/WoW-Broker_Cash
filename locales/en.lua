@@ -8,36 +8,38 @@ L['Cash'] = true
 L['Total'] = true
 
 -- Sub tooltip
-L['Since'] = '> Recorded since %s'
-L['LastSaved'] = '> Last seen on %s'
-L['DateFormat'] = '%x'
-L['DateTimeFormat'] = '%x, %X'
-L['Session'] = 'Current session'
-L['Day'] = 'Today'
-L['Week'] = 'This week'
-L['Month'] = 'This month'
-L['Year'] = 'This year'
+L['RECORDED_SINCE'] = '> Recorded since %s'
+L['LAST_SAVED'] = '> Last seen on %s'
+L['DATE_FORMAT'] = '%x'
+L['DATE_TIME_FORMAT'] = '%x, %X'
+L['Current Session'] = true
+L['Today'] = true
+L['This week'] = true
+L['This month'] = true
+L['This year'] = true
 
--- Dialog
-L['Database'] = true
+-- Options panel
+L['Options'] = true
+L['Options_LDB'] = 'LDB Display'
+L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
+L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
+L['Options_Menu'] = 'Dropdown Menu'
+L['Show Details'] = true
+L['OPTS_SHOW_DETAILS_DESC'] = 'Display a secondary tooltip with further details when hovering realms and characters.'
+
+L['Characters'] = true
+L['OPTS_CHARACTERS_INFO_1'] = 'Select one or more characters in the list below, then select an action to perform on them:'
+L['OPTS_CHARACTERS_INFO_2'] = "will reset the characters's stats to 0 but keep them in the database."
+L['OPTS_CHARACTERS_INFO_3'] = "will remove the characters's stats from the database. Note that you cannot delete the current character."
+L['OPTS_CHARACTERS_INFO_4'] = 'Warning, these actions are irreversible!'
 L['Reset'] = true
 L['Delete'] = true
-L['DLGINFO0'] = 'Notice'
-L['DLGINFO1'] = 'Select one or more characters in the list below, then select an action to perform on them:'
-L['DLGINFO2'] = "will reset the characters's stats to 0 but keep them in the database."
-L['DLGINFO3'] = "will remove the characters's stats from the database. Note that you cannot delete the current character."
-L['DLGINFO4'] = 'Warning, these actions are irreversible!'
-L['NUMSELECTED'] = '%d selected'
+L['Notice'] = true
+L['NUMSELECTED_0'] = 'None selected'
+L['NUMSELECTED_1'] = '1 selected'
+L['NUMSELECTED_X'] = '%d selected'
 L['RESET_TOON'] = 'Reset this toon:'
 L['RESET_TOONS'] = 'Reset %d toons:'
 L['DELETE_TOON'] = 'Delete this toon:'
 L['DELETE_TOONS'] = 'Delete %d toons:'
 L['Are you sure?'] = true
-
-L['Options'] = true
-L['Options_LDB'] = 'LDB Display'
-L['Options_Menu'] = 'Dropdown Menu'
-L['DLGINFO10'] = 'You may want to hide the silver and copper parts of every money string displayed by Broker_Cash, but please note that these will be shown anyway if the gold part is zero.'
-L['Show Copper'] = true
-L['Show Silver'] = true
-L['Show Silver and Copper'] = true

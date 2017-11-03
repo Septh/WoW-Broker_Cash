@@ -2,6 +2,7 @@
 -- Environnement
 -- GLOBALS: LibStub
 local addon   = LibStub('AceAddon-3.0'):NewAddon('Broker_Cash', 'AceConsole-3.0', 'AceEvent-3.0')
+local version = GetAddOnMetadata('Broker_Cash', 'Version')
 local L       = LibStub('AceLocale-3.0'):GetLocale('Broker_Cash')
 local libLDB  = LibStub('LibDataBroker-1.1')
 local libQTip = LibStub('LibQTip-1.0')
@@ -43,6 +44,16 @@ local allRealms, allChars, realmWeath = {}, {}, {}
 
 -- Données sauvegardées
 local sv_defaults = {
+	global = {
+		version = '',
+		ldb = {
+			showSilverAndCopper = true,
+		},
+		menu = {
+			showSilverAndCopper = true,
+			showSubTooltips = true,
+		}
+	},
 	char = {
 		money     = 0,
 		since     = 0,
@@ -50,26 +61,14 @@ local sv_defaults = {
 		day       = 0,
 		week      = 0,
 		month     = 0,
-		year      = 0
-	},
-	global = {
-		ldb = {
-			showCopper  = true,
-			showSilver  = true,
-			showSilverAndCopper = true,
-		},
-		menu = {
-			showCopper = true,
-			showSilver = true,
-			showSilverAndCopper = true,
-			showSubTooltips = true,
-		}
+		year      = 0,
+		allTimes  = 0
 	}
 }
 
 -- Panneau des options
 local options_panel = {
-	name    = 'Broker_Cash v' .. GetAddOnMetadata('Broker_Cash', 'Version'),
+	name    = 'Broker_Cash v' .. version,
 	handler = addon,
 	type    = 'group',
 	childGroups = 'tab',
@@ -247,10 +246,13 @@ local function GetAbsoluteMoneyString(amount, showSilverAndCopper)
 		table.insert(tbl, BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING)
 	end
 	if showSilverAndCopper or gold == 0 then
+		local fmt
 		if silver > 0 then
-			table.insert(tbl, silver .. SILVER_ICON_STRING)
+			fmt = (gold == 0) and '%d%s' or '%02d%s'
+			table.insert(tbl, fmt:format(silver, SILVER_ICON_STRING))
 		end
-		table.insert(tbl, copper .. COPPER_ICON_STRING)
+		fmt = (gold + silver == 0) and '%d%s' or '%02d%s'
+		table.insert(tbl, fmt:format(copper, COPPER_ICON_STRING))
 	end
 	return table.concat(tbl, ' ')
 end
@@ -291,7 +293,7 @@ function addon:ConfigPanel_DoDeleteCharacters(info, value)
 	end
 
 	-- Recalcule la richesse des royaumes
-	self:CountWealth()
+	self:CountRealmsWealth()
 
 	-- Déselectionne tous les personnages et redessine le panneau des options
 	numSelectedToons = #wipe(selectedToons)
@@ -311,7 +313,7 @@ function addon:ConfigPanel_DoResetCharacters(info, value)
 	end
 
 	-- Recalcule la richesse des royaumes
-	self:CountWealth()
+	self:CountRealmsWealth()
 
 	-- Déselectionne tous les personnages
 	numSelectedToons = #wipe(selectedToons)
@@ -457,23 +459,25 @@ function addon:ShowRealmTooltip(realmLineFrame, selectedRealm)
 	if not stt then return end
 
 	-- Calcule et affiche les données du royaume
-	local realmDay, realmWeek, realmMonth, realmYear = 0, 0, 0, 0
+	local realmDay, realmWeek, realmMonth, realmYear, realmAllTimes = 0, 0, 0, 0, 0
 	for key,data in pairs(self.sv.char) do
 		local _, realm = SplitCharKey(key)
 
 		if realm == selectedRealm then
-			realmDay   = realmDay   + (data.day   or 0)
-			realmWeek  = realmWeek  + (data.week  or 0)
-			realmMonth = realmMonth + (data.month or 0)
-			realmYear  = realmYear  + (data.year  or 0)
+			realmDay      = realmDay      + (data.day      or 0)
+			realmWeek     = realmWeek     + (data.week     or 0)
+			realmMonth    = realmMonth    + (data.month    or 0)
+			realmYear     = realmYear     + (data.year     or 0)
+			realmAllTimes = realmAllTimes + (data.allTimes or 0)
 		end
 	end
 
 	local showSilverAndCopper = self.opts.menu.showSilverAndCopper
-	stt:AddLine(L['Today'],      GetRelativeMoneyString(realmDay,   showSilverAndCopper))
-	stt:AddLine(L['This week'],  GetRelativeMoneyString(realmWeek,  showSilverAndCopper))
-	stt:AddLine(L['This month'], GetRelativeMoneyString(realmMonth, showSilverAndCopper))
-	stt:AddLine(L['This year'],  GetRelativeMoneyString(realmYear,  showSilverAndCopper))
+	stt:AddLine(L['Today'],      GetRelativeMoneyString(realmDay,      showSilverAndCopper))
+	stt:AddLine(L['This week'],  GetRelativeMoneyString(realmWeek,     showSilverAndCopper))
+	stt:AddLine(L['This month'], GetRelativeMoneyString(realmMonth,    showSilverAndCopper))
+	stt:AddLine(L['This year'],  GetRelativeMoneyString(realmYear,     showSilverAndCopper))
+	-- stt:AddLine(L['All times'],  GetRelativeMoneyString(realmAllTimes, showSilverAndCopper))
 	stt:Show()
 end
 
@@ -498,10 +502,11 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 	if selectedCharKey == currentCharKey then
 		stt:AddLine(L['Current Session'], GetRelativeMoneyString(sessionMoney, showSilverAndCopper))
 	end
-	stt:AddLine(L['Today'],      GetRelativeMoneyString(data.day,   showSilverAndCopper))
-	stt:AddLine(L['This week'],  GetRelativeMoneyString(data.week,  showSilverAndCopper))
-	stt:AddLine(L['This month'], GetRelativeMoneyString(data.month, showSilverAndCopper))
-	stt:AddLine(L['This year'],  GetRelativeMoneyString(data.year,  showSilverAndCopper))
+	stt:AddLine(L['Today'],      GetRelativeMoneyString(data.day,      showSilverAndCopper))
+	stt:AddLine(L['This week'],  GetRelativeMoneyString(data.week,     showSilverAndCopper))
+	stt:AddLine(L['This month'], GetRelativeMoneyString(data.month,    showSilverAndCopper))
+	stt:AddLine(L['This year'],  GetRelativeMoneyString(data.year,     showSilverAndCopper))
+	-- stt:AddLine(L['All times'],  GetRelativeMoneyString(data.allTimes, showSilverAndCopper))
 	stt:Show()
 end
 
@@ -515,8 +520,8 @@ function addon:HideMainTooltip()
 		mainTooltip:Release()
 
 		-- Cache le surlignage
-		highlightTexture:SetParent(UIParent)
 		highlightTexture:Hide()
+		highlightTexture:SetParent(UIParent)
 	end
 	mainTooltip = nil
 end
@@ -564,11 +569,12 @@ function addon:UpdateMainTooltip()
 
 	-- Personnage courant en premier
 	mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       showSilverAndCopper), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Today'],           GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   showSilverAndCopper), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This week'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  showSilverAndCopper), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This month'],      GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month, showSilverAndCopper), GameTooltipTextSmall)
-	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This year'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  showSilverAndCopper), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,          showSilverAndCopper), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Today'],           GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,      showSilverAndCopper), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This week'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,     showSilverAndCopper), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This month'],      GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month,    showSilverAndCopper), GameTooltipTextSmall)
+	ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This year'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,     showSilverAndCopper), GameTooltipTextSmall)
+	-- ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['All times'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.allTimes, showSilverAndCopper), GameTooltipTextSmall)
 	mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
 	-- Trie les royaumes par ordre décroissant de richesse
@@ -589,7 +595,7 @@ function addon:UpdateMainTooltip()
 
 		-- 1/ Nom du royaume + nombre de personnages (la richesse est ajoutée après la boucle)
 		rln = mtt:AddLine()
-		mtt:SetCell(rln, 1, string.format('%s %s (%d)', unfoldedRealms[realm] and MINUS_BUTTON_STRING or PLUS_BUTTON_STRING, realm, #allChars[realm]))
+		mtt:SetCell(rln, 1, ('%s %s (%d)'):format(unfoldedRealms[realm] and MINUS_BUTTON_STRING or PLUS_BUTTON_STRING, realm, #allChars[realm]))
 		mtt:SetCellTextColor(rln, 1, COLOR_YELLOW:GetRGBA())
 		mtt:SetLineScript(rln, 'OnEnter',     MainTooltip_OnEnterRealm, realm)
 		mtt:SetLineScript(rln, 'OnLeave',     MainTooltip_OnLeaveRealm)
@@ -662,48 +668,49 @@ function addon:CheckStatResets(charData)
 	-- On recalcule les dates de réinitialisation des statistiques
 	-- seulement si on a changé de jour depuis le dernier calcul
 	local today = date('*t')
-	if (yday or -1) == today.yday then return end
-	yday = today.yday
+	if (yday or 0) < today.yday then
+		yday = today.yday
 
-	-- Toutes les limites sont calculées à 00:00:00
-	-- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
-	local limit = {
-		hour = 0,
-		min  = 0,
-		sec  = 0
-	}
+		-- Toutes les limites sont calculées à 00:00:00
+		-- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
+		local limit = {
+			hour = 0,
+			min  = 0,
+			sec  = 0
+		}
 
-	-- Début du jour courant
-	limit.day   = today.day
-	limit.month = today.month
-	limit.year  = today.year
-	startOfDay  = time(limit)
+		-- Début du jour courant
+		limit.day   = today.day
+		limit.month = today.month
+		limit.year  = today.year
+		startOfDay  = time(limit)
 
-	-- Début de la semaine courante
-	limit.day   = today.day - (today.wday >= FIRST_DAY_OF_WEEK and (today.wday - FIRST_DAY_OF_WEEK) or (7 - today.wday))
-	limit.month = today.month
-	limit.year  = today.year
-	if limit.day < 1 then
-		limit.month = limit.month - 1
-		if limit.month < 1 then
-			limit.month = 12
-			limit.year = limit.year - 1
+		-- Début de la semaine courante
+		limit.day   = today.day - (today.wday >= FIRST_DAY_OF_WEEK and (today.wday - FIRST_DAY_OF_WEEK) or (7 - today.wday))
+		limit.month = today.month
+		limit.year  = today.year
+		if limit.day < 1 then
+			limit.month = limit.month - 1
+			if limit.month < 1 then
+				limit.month = 12
+				limit.year = limit.year - 1
+			end
+			limit.day = date('*t', time( { year = limit.year, month = limit.month + 1, day = 0 } ))['day'] - limit.day	-- D'après http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
 		end
-		limit.day = date('*t', time( { year = limit.year, month = limit.month + 1, day = 0 } ))['day'] - limit.day	-- D'après http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
+		startOfWeek = time(limit)
+
+		-- Début du mois courant
+		limit.day    = 1
+		limit.month  = today.month
+		limit.year   = today.year
+		startOfMonth = time(limit)
+
+		-- Début de l'année courante
+		limit.day   = 1
+		limit.month = 1
+		limit.year  = today.year
+		startOfYear = time(limit)
 	end
-	startOfWeek = time(limit)
-
-	-- Début du mois courant
-	limit.day    = 1
-	limit.month  = today.month
-	limit.year   = today.year
-	startOfMonth = time(limit)
-
-	-- Début de l'année courante
-	limit.day   = 1
-	limit.month = 1
-	limit.year  = today.year
-	startOfYear = time(limit)
 
 	-- Réinitialise les stats qui ont dépassé leur date limite
 	-- (à nil plutôt que 0 pour rester consistant avec AceDB)
@@ -716,7 +723,7 @@ end
 
 -------------------------------------------------------------------------------
 -- Calcule la richesse globale de chaque royaume
-function addon:CountWealth()
+function addon:CountRealmsWealth()
 
 	-- Efface tout
 	table.wipe(allChars)
@@ -753,12 +760,13 @@ function addon:PLAYER_MONEY()
 	-- Met à jour la stat de session
 	sessionMoney = sessionMoney + diff
 
-	-- Et les stats quotidienne/hebdomadaire/mensuelle/annuelle
+	-- Et les stats quotidienne/hebdomadaire/mensuelle/annuelle/éternelles
 	self.db.char.money     = money
-	self.db.char.day       = (self.db.char.day   or 0) + diff
-	self.db.char.week      = (self.db.char.week  or 0) + diff
-	self.db.char.month     = (self.db.char.month or 0) + diff
-	self.db.char.year      = (self.db.char.year  or 0) + diff
+	self.db.char.day       = (self.db.char.day      or 0) + diff
+	self.db.char.week      = (self.db.char.week     or 0) + diff
+	self.db.char.month     = (self.db.char.month    or 0) + diff
+	self.db.char.year      = (self.db.char.year     or 0) + diff
+	self.db.char.allTimes  = (self.db.char.allTimes or 0) + diff
 	self.db.char.lastSaved = time()
 
 	-- Et la richesse du royaume
@@ -799,32 +807,42 @@ end
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
 
-	-- Charge ou crée les données sauvegardées
-	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
-	local _ = self.db.char.dummy	-- S'assure que la table self.db.char est initialisée
-
-	-- conversion des options v1.3.3 => v1.4.0
-	self.opts = self.db.global
-	do
-		local opts = self.opts
-		if opts.ldb.showSilver == false or opts.ldb.showCopper == false then
-			opts.ldb.showSilverAndCopper = false
-			opts.ldb.showSilver = sv_defaults.global.ldb.showSilver
-			opts.ldb.showCopper = sv_defaults.global.ldb.showCopper
-		end
-
-		if opts.menu.showSilver == false or opts.menu.showCopper == false then
-			opts.menu.showSilverAndCopper = false
-			opts.menu.showSilver = sv_defaults.global.menu.showSilver
-			opts.menu.showCopper = sv_defaults.global.menu.showCopper
-		end
-	end
-
 	-- Garde une référence directe sur les données sauvegardées
 	self.sv = _G.Broker_CashDB
 
+	-- Conversion des options v1.3.3 => v1.4.0
+	local opts = self.sv.global
+	if opts and (opts.version or '') < version then
+		self:Printf('Converted old settings to %s', version)
+
+		if opts.ldb and (opts.ldb.showSilver == false or opts.ldb.showCopper == false) then
+			opts.ldb.showSilverAndCopper = false
+			opts.ldb.showSilver = nil
+			opts.ldb.showCopper = nil
+		end
+
+		if opts.menu and (opts.menu.showSilver == false or opts.menu.showCopper == false) then
+			opts.menu.showSilverAndCopper = false
+			opts.menu.showSilver = nil
+			opts.menu.showCopper = nil
+		end
+
+		-- Ajoute le compteur allTimes à tous les personnages
+		for _,charData in pairs(self.sv.char or {}) do
+			charData.allTimes = charData.allTimes or charData.year or charData.month or charData.week or charData.day or 0
+		end
+	end
+
+	-- Initialise les données sauvegardées
+	self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
+	local _ = self.db.char.dummy	-- S'assure que la table self.db.char est initialisée (si 1ère utilisation de l'addon)
+
+	-- Raccourci vers les options
+	self.opts = self.db.global
+	self.opts.version = version
+
 	-- Recense tous les personnages connus et calcule la richesse de chaque royaume
-	self:CountWealth()
+	self:CountRealmsWealth()
 
 	-- Crée l'icône LDB
 	self.dataObject = libLDB:NewDataObject('Broker_Cash', {
@@ -842,8 +860,8 @@ end
 
 -----------------------------------------------------------------------------
 -- GLOBALS: IsAddOnLoaded, LoadAddOn, DevTools_Dump
-function addon:Dump(x)
+--[[ function addon:Dump(x)
     if not IsAddOnLoaded('Blizzard_DebugTools') then LoadAddOn('Blizzard_DebugTools') end
     DevTools_Dump(x)
 end
---
+-- ]]

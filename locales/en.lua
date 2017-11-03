@@ -17,6 +17,7 @@ L['Today'] = true
 L['This week'] = true
 L['This month'] = true
 L['This year'] = true
+L['All times'] = true
 
 -- Options panel
 L['Options'] = true

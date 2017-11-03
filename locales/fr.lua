@@ -1,5 +1,5 @@
 
-local L = LibStub('AceLocale-3.0'):NewLocale('Broker_Cash', 'frFR')
+local L = LibStub('AceLocale-3.0'):NewLocale('Broker_Cash', 'enES')
 if not L then return end
 
 -- Tooltip principal
@@ -17,6 +17,7 @@ L['Today'] = "Aujourd'hui"
 L['This week'] = 'Cette semaine'
 L['This month'] = 'Ce mois'
 L['This year'] = 'Cette année'
+L['All times'] = 'En tout'
 
 -- Panneau de configuration
 L['Options'] = true

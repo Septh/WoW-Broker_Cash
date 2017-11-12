@@ -1,5 +1,10 @@
 ## Change Log
 
+* Version 1.4.0 - 2017/11/12
+	* Some internal optimizations
+	* Consolidated the **Show Copper** and **Show Silver** options into a single **Show Silver and Copper** option
+	* Added an option to disable the secondary (aka. details) tooltip
+	* Added an **Ever** statistic that will never be reset  
 * Version 1.3.3 - 2017/09/21
 	* Toc update for 7.3
 	* Using the latest Ace3 files (r1166)

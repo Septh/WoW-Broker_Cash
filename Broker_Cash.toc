@@ -1,9 +1,9 @@
 ## Interface: 70300
 ## Title: Broker_Cash
-## Notes: Keep track of your gold incomes and outcomes
+## Notes: Keep track of your gold incomes and outcomes, globally
 ## Version: 1.4.0
 ## Author: Septh
-## OptionalDeps: !Swatter, !BugGrabber
+## OptionalDeps: !Swatter, !BugGrabber, LibStub, Ace3
 ## SavedVariables: Broker_CashDB
 
 libs\LibStub\LibStub.lua

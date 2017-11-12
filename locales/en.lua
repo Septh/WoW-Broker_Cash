@@ -1,5 +1,8 @@
 
-local L = LibStub('AceLocale-3.0'):NewLocale('Broker_Cash', 'enUS', true)
+-- Environnement
+-- GLOBALS: LibStub
+local addonName, addonTable = ...
+local L = LibStub('AceLocale-3.0'):NewLocale(addonName, 'enUS', true)
 if not L then return end
 
 -- Main tooltip
@@ -11,13 +14,13 @@ L['Total'] = true
 L['RECORDED_SINCE'] = '> Recorded since %s'
 L['LAST_SAVED'] = '> Last seen on %s'
 L['DATE_FORMAT'] = '%x'
-L['DATE_TIME_FORMAT'] = '%x, %X'
+L['DATE_TIME_FORMAT'] = '%x at %X%p'
 L['Current Session'] = true
 L['Today'] = true
 L['This week'] = true
 L['This month'] = true
 L['This year'] = true
-L['All times'] = true
+L['Ever'] = true
 
 -- Options panel
 L['Options'] = true
@@ -25,6 +28,8 @@ L['Options_LDB'] = 'LDB Display'
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
 L['Options_Menu'] = 'Dropdown Menu'
+L['OPTS_DISABLE_IN_COMBAT'] = 'Disable in combat'
+L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Prevents the menu to show while in combat.'
 L['Show Details'] = true
 L['OPTS_SHOW_DETAILS_DESC'] = 'Display a secondary tooltip with further details when hovering realms and characters.'
 

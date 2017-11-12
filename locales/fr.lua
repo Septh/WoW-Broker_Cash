@@ -1,5 +1,8 @@
 
-local L = LibStub('AceLocale-3.0'):NewLocale('Broker_Cash', 'enES')
+-- Environnement
+-- GLOBALS: LibStub
+local addonName, addonTable = ...
+local L = LibStub('AceLocale-3.0'):NewLocale(addonName, 'frFR')
 if not L then return end
 
 -- Tooltip principal
@@ -17,7 +20,7 @@ L['Today'] = "Aujourd'hui"
 L['This week'] = 'Cette semaine'
 L['This month'] = 'Ce mois'
 L['This year'] = 'Cette année'
-L['All times'] = 'En tout'
+L['Ever'] = 'En tout'
 
 -- Panneau de configuration
 L['Options'] = true
@@ -25,7 +28,9 @@ L['Options_LDB'] = 'Icône LDB'
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
 L['Options_Menu'] = 'Menu déroulant'
-L['Show Details'] = 'Second tooltip'
+L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'
+L['OPTS_DISABLE_IN_COMBAT_DESC'] = "Evite de vous perturber pendant le combat..."
+L['Show Details'] = 'Détails des royaumes et des personnages'
 L['OPTS_SHOW_DETAILS_DESC'] = 'Afficher le second tooltip pour les royaumes et les personnages.'
 
 L['Characters'] = 'Personnages'

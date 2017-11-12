@@ -3,11 +3,11 @@
 
 ## Purpose
 
-**Broker: Cash** is a LibDataBroker (LDB) plugin that remembers all your characters gold balance along with daily, weekly, monthly and yearly variations.
+**Broker: Cash** is a LibDataBroker (LDB) plugin that remembers all your characters gold balance accross realms, along with daily, weekly, monthly and yearly variations.
 
 This addon *requires* a LDB display such as [ChocolateBar](https://mods.curse.com/addons/wow/chocolatebar) (my favorite) or [Bazooka](https://mods.curse.com/addons/wow/bazooka) or whichever you prefer.
 
-Currently available in English (default) and French.
+Currently available in English (default) and French. **If you can help translating Broker: Cash to your language, please head up to GitHub and sumit a PR.** 
 
 
 ## Details

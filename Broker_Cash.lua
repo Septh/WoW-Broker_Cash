@@ -1,4 +1,4 @@
--- Broker: Cash v1.4.0
+-- Broker: Cash v1.4.1
 -- By Septh, BSD licenced
 --
 
@@ -12,7 +12,6 @@ local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipTex
 -- GLOBALS: LibStub
 local addonName, addonTable = ...
 local addon   = LibStub('AceAddon-3.0'):NewAddon(addonTable, addonName, 'AceConsole-3.0', 'AceEvent-3.0')
-local version = GetAddOnMetadata(addonName, 'Version')
 local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
 local libLDB  = LibStub('LibDataBroker-1.1')
 local libQTip = LibStub('LibQTip-1.0')
@@ -37,14 +36,15 @@ local COLOR_YELLOW = CreateColor(0.8, 0.8, 0.1, 1)
 
 -- Gestion des statistiques
 local FIRST_DAY_OF_WEEK = 2	-- Lundi
-local yday, startOfDay, startOfWeek, startOfMonth, startOfYear
+local dayOfYear = 0
+local startOfDay, startOfWeek, startOfMonth, startOfYear
 
 -- Données des personnages
 local currentChar    = UnitName('player')
 local currentRealm   = GetRealmName()
 local currentCharKey = currentChar .. ' - ' .. currentRealm
 local sessionMoney   = 0
-local allRealms, allChars, realmWeath = {}, {}, {}
+local allRealms, allChars, realmsWealth = {}, {}, {}
 
 -- Données sauvegardées
 local sv_defaults = {
@@ -72,7 +72,7 @@ local sv_defaults = {
 
 -- Panneau des options
 local options_panel = {
-    name    = addonName .. ' v' .. version,
+    name    = addonName .. ' v' .. GetAddOnMetadata(addonName, 'Version'),
     handler = addon,
     type    = 'group',
     childGroups = 'tab',
@@ -286,6 +286,7 @@ end
 -- Supprime les personnages sélectionnés des données sauvegardées
 function addon:ConfigPanel_DoDeleteCharacters(info, value)
     local sv = self.sv
+
     for key in pairs(selectedToons) do
         sv.char[key] = nil
         sv.profileKeys[key] = nil
@@ -315,8 +316,9 @@ end
 -- Réinitialise les statistiques des personnages sélectionnés
 function addon:ConfigPanel_DoResetCharacters(info, value)
     local sv = self.sv
+
     for key in pairs(selectedToons) do
-        sv.char[key].lastSaved = time()
+        -- sv.char[key].lastSaved = time()
         if key == currentCharKey then
             sv.char[key].money = GetMoney()
             sv.char[key].day   = 0
@@ -518,12 +520,13 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 
     -- Affiche les données du personnage
     local data = self.sv.char[selectedCharKey]
+
     self:CheckStatResets(data, selectedCharKey == currentCharKey)
 
     local ln
     ln = stt:AddLine(); stt:SetCell(ln, 1, selectedCharKey, 2)
-    ln = stt:AddLine(); stt:SetCell(ln, 1, string.format(L['RECORDED_SINCE'], date(L['DATE_FORMAT'],      data.since)),     2)
-    ln = stt:AddLine(); stt:SetCell(ln, 1, string.format(L['LAST_SAVED'],     date(L['DATE_TIME_FORMAT'], data.lastSaved)), 2)
+    ln = stt:AddLine(); stt:SetCell(ln, 1, L['RECORDED_SINCE']:format(date(L['DATE_FORMAT'],      data.since)),     2)
+    ln = stt:AddLine(); stt:SetCell(ln, 1,     L['LAST_SAVED']:format(date(L['DATE_TIME_FORMAT'], data.lastSaved)), 2)
 
     stt:AddLine(''); stt:AddSeparator(); stt:AddLine('')
 
@@ -596,6 +599,8 @@ function addon:UpdateMainTooltip()
     mtt:AddSeparator(); mtt:AddLine('')
 
     -- Personnage courant en premier
+    self:CheckStatResets(self.db.char, true)
+
     mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
     ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       showSilverAndCopper), GameTooltipTextSmall)
     ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Today'],           GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   showSilverAndCopper), GameTooltipTextSmall)
@@ -606,16 +611,16 @@ function addon:UpdateMainTooltip()
     mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
     -- Trie les royaumes par ordre décroissant de richesse
-    -- (fait ici car l'ordre peut changer à tout instant)
+    -- (fait ici car l'ordre peut changer à tout moment)
     table.sort(allRealms, function(r1, r2)
-        return realmWeath[r1] > realmWeath[r2]
+        return realmsWealth[r1] > realmsWealth[r2]
     end)
 
     -- Ajoute tous les personnages, royaume par royaume
     local sv, totalMoney = self.sv, 0
     for _,realm in ipairs(allRealms) do
         local unfolded = unfoldedRealms[realm]
-        local realmMoney = realmWeath[realm]
+        local realmMoney = realmsWealth[realm]
 
         -- Comptabilise la richesse par totale
         totalMoney = totalMoney + realmMoney
@@ -668,6 +673,7 @@ end
 
 -------------------------------------------------------------------------------
 function addon:ShowMainTooltip(LDBFrame)
+
     -- N'affiche pas le tooltip en plein combat
     if self.opts.menu.disableInCombat and InCombatLockdown() then return end
 
@@ -680,7 +686,7 @@ function addon:ShowMainTooltip(LDBFrame)
         local LDBFrameName = LDBFrame:GetName() or ''
         if not LDBFrameName:find('Bazooka', 1) then
             highlightTexture:SetParent(LDBFrame)
-            highlightTexture:SetAllPoints(LDBFrame)
+            highlightTexture:SetAllPoints()
             highlightTexture:Show()
         end
     end
@@ -690,71 +696,128 @@ end
 -------------------------------------------------------------------------------
 -- Gestion des statistiques des personnages
 -------------------------------------------------------------------------------
+
+-- Calcule les dates de réinitialisation des statistiques
+local function days_in_month(m, y)
+	-- http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
+	return date('*t', time( { year = y, month = m + 1, day = 0 } ))['day']
+end
+
+function addon:CalcResetDates()
+
+    -- Seulement si on a changé de jour depuis le dernier calcul
+    local today = date('*t')
+    if dayOfYear == today.yday then return false end
+    dayOfYear = today.yday
+
+    -- Toutes les limites sont fixées à 00:00:00
+    -- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
+    local limit = {
+        hour = 0,
+        min  = 0,
+        sec  = 0
+    }
+
+    -- Début du jour courant
+    limit.day   = today.day
+    limit.month = today.month
+    limit.year  = today.year
+    startOfDay  = time(limit)
+
+    -- Début de la semaine courante
+    local numDaysBack
+    if today.wday == FIRST_DAY_OF_WEEK then
+        numDaysBack = 0 -- Une nouvelle semaine commence aujourd'hui
+    elseif today.wday > FIRST_DAY_OF_WEEK then
+        numDaysBack = today.wday - FIRST_DAY_OF_WEEK
+    else
+        numDaysBack = 7 - today.wday
+    end
+    limit.day   = today.day - numDaysBack
+    limit.month = today.month
+    limit.year  = today.year
+    if limit.day < 1 then
+        limit.month = limit.month - 1
+        if limit.month < 1 then
+            limit.month = 12
+            limit.year = limit.year - 1
+        end
+        limit.day = days_in_month(limit.month, limit.year) + limit.day
+    end
+    startOfWeek = time(limit)
+
+    -- Début du mois courant
+    limit.day    = 1
+    limit.month  = today.month
+    limit.year   = today.year
+    startOfMonth = time(limit)
+
+    -- Début de l'année courante
+    limit.day   = 1
+    limit.month = 1
+    limit.year  = today.year
+    startOfYear = time(limit)
+
+    -- Les dates ont changé
+    return true
+end
+
+-------------------------------------------------------------------------------
+-- Réinitialise les stats qui ont dépassé leur date limite
 function addon:CheckStatResets(charData, isCurrentChar)
 
-    -- Recalcule les dates de réinitialisation des statistiques,
-    -- mais seulement si on a changé de jour depuis le dernier calcul
-    local today = date('*t')
-    if (yday or 0) < today.yday then
-        yday = today.yday
+    -- On a changé de jour depuis la dernière vérification ?
+    if self:CalcResetDates() then
+        -- Réinitilise à 0 pour le personnage courant, à nil pour les autres afin de rester consistant avec AceDB
+        local charLastSaved, resetValue = charData.lastSaved or 0, isCurrentChar and 0 or nil
 
-        -- Toutes les limites sont calculées à 00:00:00
-        -- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
-        local limit = {
-            hour = 0,
-            min  = 0,
-            sec  = 0
-        }
+        if charLastSaved < startOfDay   then charData.day   = resetValue end -- Quotidienne
+        if charLastSaved < startOfWeek  then charData.week  = resetValue end -- Hebdomadaire
+        if charLastSaved < startOfMonth then charData.month = resetValue end -- Mensuelle
+        if charLastSaved < startOfYear  then charData.year  = resetValue end -- Annuelle
 
-        -- Début du jour courant
-        limit.day   = today.day
-        limit.month = today.month
-        limit.year  = today.year
-        startOfDay  = time(limit)
-
-        -- Début de la semaine courante
-        limit.day   = today.day - (today.wday >= FIRST_DAY_OF_WEEK and (today.wday - FIRST_DAY_OF_WEEK) or (7 - today.wday))
-        limit.month = today.month
-        limit.year  = today.year
-        if limit.day < 1 then
-            limit.month = limit.month - 1
-            if limit.month < 1 then
-                limit.month = 12
-                limit.year = limit.year - 1
-            end
-            limit.day = date('*t', time( { year = limit.year, month = limit.month + 1, day = 0 } ))['day'] - limit.day	-- D'après http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
+        -- Ajoute le champ 'ever' aux personnages qui ne l'ont pas
+        if not charData.ever then
+            charData.ever = charData.year or charData.month or charData.week or charData.day or resetValue
         end
-        startOfWeek = time(limit)
-
-        -- Début du mois courant
-        limit.day    = 1
-        limit.month  = today.month
-        limit.year   = today.year
-        startOfMonth = time(limit)
-
-        -- Début de l'année courante
-        limit.day   = 1
-        limit.month = 1
-        limit.year  = today.year
-        startOfYear = time(limit)
     end
+end
 
-    -- Réinitialise les stats qui ont dépassé leur date limite
-    -- (à 0 pour le personnage courant, à nil pour les autres afin de rester consistant avec AceDB)
-    local charLastSaved, resetValue = charData.lastSaved or 0, isCurrentChar and 0 or nil
+-------------------------------------------------------------------------------
+-- Calcule la richesse globale de chaque royaume
+function addon:AuditRealms()
 
-    if charLastSaved < startOfDay   then charData.day   = resetValue end	-- Quotidienne
-    if charLastSaved < startOfWeek  then charData.week  = resetValue end 	-- Hebdomadaire
-    if charLastSaved < startOfMonth then charData.month = resetValue end 	-- Mensuelle
-    if charLastSaved < startOfYear  then charData.year  = resetValue end 	-- Annuelle
+    -- Recense les personnages connus
+    table.wipe(allRealms)       -- { 'royaume1', 'royaume2', ..., 'royaumeN' }
+    table.wipe(allChars)        -- { ['royaume1'] = { 'perso1', ..., 'persoN' }, ..., ['royaumeN] = {...} }
+    table.wipe(realmsWealth)    -- { ['royaume1'] = XXX, ..., ['royaumeN] = ZZZ }
+
+    for charKey,charData in pairs(self.sv.char) do
+
+        -- Vérifie s'il faut réinitialier les stats de ce personnage
+        self:CheckStatResets(charData, charKey == currentCharKey)
+
+        -- Recense ce personnage
+        local name, realm = SplitCharKey(charKey)
+        if allChars[realm] then
+            table.insert(allChars[realm], name)
+        else
+            table.insert(allRealms, realm)
+            allChars[realm] = { name }
+        end
+
+        -- Comptabilise la richesse de chaque royaume
+        realmsWealth[realm] = (realmsWealth[realm] or 0) + (charData.money or 0)
+    end
 end
 
 -------------------------------------------------------------------------------
 -- Mise à jour des données du personnage courant à chaque gain ou perte d'argent
 -------------------------------------------------------------------------------
-function addon:PLAYER_MONEY()
+function addon:PLAYER_MONEY(evt)
 
-    -- Vérifie s'il faut réinitialiser les statistiques
+    -- Vérifie s'il faut réinitialiser les stats du personnage
+    -- A faire avant chaque dépense / rentrée d'argent
     self:CheckStatResets(self.db.char, true)
 
     -- Enregistre la dépense / recette
@@ -774,33 +837,10 @@ function addon:PLAYER_MONEY()
     self.db.char.ever      = self.db.char.ever  + diff
 
     -- Et la richesse du royaume actuel.
-    realmWeath[currentRealm] = realmWeath[currentRealm] + diff
+    realmsWealth[currentRealm] = (realmsWealth[currentRealm] or 0) + diff
 
     -- Met à jour le texte du LDB
     self.dataObject.text = GetAbsoluteMoneyString(money, self.opts.ldb.showSilverAndCopper)
-end
-
--------------------------------------------------------------------------------
--- Calcule la richesse globale de chaque royaume
-function addon:AuditRealms()
-
-    -- Efface et recalcule tout
-    table.wipe(allChars)    -- { ['royame1'] = { 'perso1', ..., 'persoN' }, ..., ['royaumeN] = {...} }
-    table.wipe(allRealms)   -- { 'royaume1', 'royaume2', ..., 'royaumeN' }
-    table.wipe(realmWeath)
-
-    for charKey,charData in pairs(self.sv.char) do
-        local name, realm = SplitCharKey(charKey)
-
-        if allChars[realm] then
-            table.insert(allChars[realm], name)
-        else
-            table.insert(allRealms, realm)
-            allChars[realm] = { name }
-        end
-
-        realmWeath[realm] = (realmWeath[realm] or 0) + (charData.money or 0)
-    end
 end
 
 -------------------------------------------------------------------------------
@@ -813,17 +853,17 @@ end
 -------------------------------------------------------------------------------
 function addon:OnEnable()
 
-    -- Première connexion avec ce personnage ?
-    -- (à faire ici car GetMoney() ne fonctionne pas avant PLAYER_ENTERING_WORLD)
+    -- Sauve la richesse du personnage courant
+    -- (fait ici GetMoney() ne fonctionne pas avant PLAYER_ENTERING_WORLD)
     if self.db.char.since == 0 then
-        self.db.char.since = time()
+        self.db.char.since = time()     -- Première connexion avec ce personnage
         self.db.char.money = GetMoney()
     end
-
-    -- Pré-calcule la richesse de chaque royaume et sauve les données du personnage actuel
-    -- (fait ici car l'addon peut être activé/désactivé à tout moment)
-    self:AuditRealms()
     self:PLAYER_MONEY()
+
+    -- Pré-calcule la richesse de tous les royaumes connus
+    -- (fait ici car l'addon peut être désactivé / réactivé à tout moment)
+    self:AuditRealms()
 
     -- Surveille les événements
     self:RegisterEvent('PLAYER_MONEY')
@@ -837,39 +877,29 @@ function addon:OnInitialize()
     -- Garde une référence directe sur les données sauvegardées brutes
     self.sv = _G.Broker_CashDB
 
-    -- Ajoute le champ ever aux personnages qui ne l'ont pas
-    for _,data in pairs(self.sv.char or {}) do
-        data.ever = data.ever or data.year or data.month or data.week or data.day
-    end
-
     -- Initialise AceDB
     self.db = LibStub('AceDB-3.0'):New(self.sv, sv_defaults, true)
-    local _ = self.db.char.dummy    -- S'assure que la table char existe dans Broker_CashDB
 
     -- Conversion des options v1.3.3 => v1.4.0
     self.opts = self.db.global
-    if self.opts.ldb.showSilver == false or self.opts.ldb.showCopper == false then
-        self.opts.ldb.showSilverAndCopper = false
-        self.opts.ldb.showSilver = nil
-        self.opts.ldb.showCopper = nil
+    for _,section in ipairs { 'ldb', 'menu' } do
+        if self.opts[section].showSilver == false or self.opts[section].showCopper == false then
+            self.opts[section].showSilverAndCopper = false
+            self.opts[section].showSilver = nil
+            self.opts[section].showCopper = nil
+        end
     end
 
-    if self.opts.menu.showSilver == false or self.opts.menu.showCopper == false then
-        self.opts.menu.showSilverAndCopper = false
-        self.opts.menu.showSilver = nil
-        self.opts.menu.showCopper = nil
-    end
-
-    -- Crée l'icône LDB
+    -- Crée l'objet LDB
     self.dataObject = libLDB:NewDataObject(addonName, {
         type    = 'data source',
         icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
-        text    = 'Cash',
+        text    = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper),   -- Ok même si première connexion
         OnEnter = function(f) addon:ShowMainTooltip(f) end,
         OnClick = function(f, b) addon:ShowOptionsPanel() end
     })
 
-    -- Commandes
+    -- Commandes slash
     for _,cmd in ipairs({ 'brokercash', 'bcash'--[[ , 'cash', 'bc' ]] }) do
         self:RegisterChatCommand(cmd, 'ShowOptionsPanel')
     end
@@ -880,5 +910,5 @@ end
 --[[ function addon:Dump(x)
     if not IsAddOnLoaded('Blizzard_DebugTools') then LoadAddOn('Blizzard_DebugTools') end
     DevTools_Dump(x)
-end
--- ]]
+end ]]
+--

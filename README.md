@@ -12,7 +12,7 @@ Currently available in English (default) and French. **If you can help translati
 
 ## Details
 
-**Broker: Cash** does not maintain a full history of your gold gains and losses; it merely keeps tracks of the *variations* of your gold balance on predefined periods of time.
+**Broker: Cash** does not maintain a full history of your gold gains and losses; it merely keeps tracks of the *variations* (ie. gains and losses) of your gold balance on predefined periods of time.
 
 * **Session**: variation since connected
 * **Daily**: variation since midnight
@@ -26,12 +26,12 @@ Each stat is reset to 0 at the beginning of the corresponding period. You may al
 
 ## Resetting or deleting statistics
 
-Starting with 1.2.0, **Broker: Cash** allows you to reset or delete the statistics for any character it knows. Type `/brokercash` (or `/bcash` or simply `/cash`) in your chat window to access this feature.
+Starting with 1.2.0, **Broker: Cash** allows you to reset or delete the statistics for any character it knows. Type `/brokercash` (or simply `/bcash`) in your chat window to access this feature.
 
 
 ## Configuration
 
-Starting with 1.3.0, **Broker: Cash** allows you to hide the copper and silver amounts in both the LDB display and the dropdown menu. Type `/brokercash` (or `/bcash` or simply `/cash`) in your chat window to access this feature.
+Starting with 1.3.0, **Broker: Cash** allows you to hide the copper and silver amounts in both the LDB display and the dropdown menu. Type `/brokercash` (or simply `/bcash`) in your chat window to access this feature.
 
 
 ## TODO

@@ -450,7 +450,6 @@ end
 
 -------------------------------------------------------------------------------
 function addon:PrepareSubTooltip(mainTooltipLine)
-
     if not self.opts.menu.showSubTooltips then return end
 
     -- Affiche (ou déplace) le sous-tooltip
@@ -520,7 +519,6 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 
     -- Affiche les données du personnage
     local data = self.sv.char[selectedCharKey]
-
     self:CheckStatResets(data, selectedCharKey == currentCharKey)
 
     local ln
@@ -599,6 +597,7 @@ function addon:UpdateMainTooltip()
     mtt:AddSeparator(); mtt:AddLine('')
 
     -- Personnage courant en premier
+    self:CalcResetDates()
     self:CheckStatResets(self.db.char, true)
 
     mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
@@ -766,20 +765,17 @@ end
 -- Réinitialise les stats qui ont dépassé leur date limite
 function addon:CheckStatResets(charData, isCurrentChar)
 
-    -- On a changé de jour depuis la dernière vérification ?
-    if self:CalcResetDates() then
-        -- Réinitilise à 0 pour le personnage courant, à nil pour les autres afin de rester consistant avec AceDB
-        local charLastSaved, resetValue = charData.lastSaved or 0, isCurrentChar and 0 or nil
+    -- Réinitilise à 0 pour le personnage courant, à nil pour les autres afin de rester consistant avec AceDB
+    local charLastSaved, resetValue = charData.lastSaved or 0, isCurrentChar and 0 or nil
 
-        if charLastSaved < startOfDay   then charData.day   = resetValue end -- Quotidienne
-        if charLastSaved < startOfWeek  then charData.week  = resetValue end -- Hebdomadaire
-        if charLastSaved < startOfMonth then charData.month = resetValue end -- Mensuelle
-        if charLastSaved < startOfYear  then charData.year  = resetValue end -- Annuelle
+    if charLastSaved < startOfDay   then charData.day   = resetValue end -- Quotidienne
+    if charLastSaved < startOfWeek  then charData.week  = resetValue end -- Hebdomadaire
+    if charLastSaved < startOfMonth then charData.month = resetValue end -- Mensuelle
+    if charLastSaved < startOfYear  then charData.year  = resetValue end -- Annuelle
 
-        -- Ajoute le champ 'ever' aux personnages qui ne l'ont pas
-        if not charData.ever then
-            charData.ever = charData.year or charData.month or charData.week or charData.day or resetValue
-        end
+    -- Ajoute le champ 'ever' aux personnages qui ne l'ont pas
+    if not charData.ever then
+        charData.ever = charData.year or charData.month or charData.week or charData.day or resetValue
     end
 end
 
@@ -792,6 +788,7 @@ function addon:AuditRealms()
     table.wipe(allChars)        -- { ['royaume1'] = { 'perso1', ..., 'persoN' }, ..., ['royaumeN] = {...} }
     table.wipe(realmsWealth)    -- { ['royaume1'] = XXX, ..., ['royaumeN] = ZZZ }
 
+    self:CalcResetDates()
     for charKey,charData in pairs(self.sv.char) do
 
         -- Vérifie s'il faut réinitialier les stats de ce personnage
@@ -818,6 +815,7 @@ function addon:PLAYER_MONEY(evt)
 
     -- Vérifie s'il faut réinitialiser les stats du personnage
     -- A faire avant chaque dépense / rentrée d'argent
+    self:CalcResetDates()
     self:CheckStatResets(self.db.char, true)
 
     -- Enregistre la dépense / recette

@@ -872,11 +872,8 @@ end
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
 
-    -- Garde une référence directe sur les données sauvegardées brutes
-    self.sv = _G.Broker_CashDB
-
     -- Initialise AceDB
-    self.db = LibStub('AceDB-3.0'):New(self.sv, sv_defaults, true)
+    self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
 
     -- Conversion des options v1.3.3 => v1.4.0
     self.opts = self.db.global
@@ -888,7 +885,10 @@ function addon:OnInitialize()
         end
     end
 
-    -- Crée l'objet LDB
+    -- Garde une référence directe sur les données sauvegardées brutes
+    self.sv = _G.Broker_CashDB
+
+        -- Crée l'objet LDB
     self.dataObject = libLDB:NewDataObject(addonName, {
         type    = 'data source',
         icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',

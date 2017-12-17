@@ -85,7 +85,7 @@ local options_panel = {
             set   = 'ConfigPanel_SetOpt',
             args  = {
                 ldb = {
-                    name   = L['Options_LDB'],
+                    name   = L['OPTIONS_LDB'],
                     type   = 'group',
                     inline = true,
                     order  = 10,
@@ -101,7 +101,7 @@ local options_panel = {
                     },
                 },
                 menu = {
-                    name   = L['Options_Menu'],
+                    name   = L['OPTIONS_MENU'],
                     type   = 'group',
                     inline = true,
                     order  = 20,

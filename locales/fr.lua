@@ -24,10 +24,10 @@ L['Ever'] = 'En tout'
 
 -- Panneau de configuration
 L['Options'] = true
-L['Options_LDB'] = 'Icône LDB'
+L['OPTIONS_LDB'] = 'Icône LDB'
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
-L['Options_Menu'] = 'Menu déroulant'
+L['OPTIONS_MENU'] = 'Menu déroulant'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = "Evite de vous perturber pendant le combat..."
 L['Show Details'] = 'Détails des royaumes et des personnages'

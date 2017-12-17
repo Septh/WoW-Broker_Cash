@@ -24,10 +24,10 @@ L['Ever'] = true
 
 -- Options panel
 L['Options'] = true
-L['Options_LDB'] = 'LDB Display'
+L['OPTIONS_LDB'] = 'LDB Display'
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
-L['Options_Menu'] = 'Dropdown Menu'
+L['OPTIONS_MENU'] = 'Dropdown Menu'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Disable in combat'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Prevents the menu to show while in combat.'
 L['Show Details'] = true

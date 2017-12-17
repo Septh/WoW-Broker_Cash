@@ -1,5 +1,11 @@
 ## Change Log
 
+* Version 1.4.4 - 2017/12/??
+	* Added German locale, thanks to [**Scarwolf**](https://github.com/Septh/WoW-Broker_Cash/pull/2)
+* Version 1.4.3 - 2017/12/12
+	* Fixed the addon not working on fresh installs (\*sigh\*). [Thanks to **kkrzyzak** for pointing out](https://github.com/Septh/WoW-Broker_Cash/issues/1).
+* Version 1.4.2 - 2017/12/12
+	* Minor fixes. Daily stat should reset correctly now.
 * Version 1.4.1 - 2017/12/04
 	* Some more internal optimizations
 	* Corrected a flaw in the stats reset logic. Should work as expected now.

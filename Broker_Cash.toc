@@ -1,7 +1,7 @@
 ## Interface: 70300
 ## Title: Broker_Cash
-## Notes: Keep track of your gold incomes and outcomes, globally
-## Version: 1.4.3
+## Notes: Keeping track of your gold incomes and outcomes, globally
+## Version: 1.4.4
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, LibStub, Ace3
 ## SavedVariables: Broker_CashDB
@@ -11,15 +11,16 @@ libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
+libs\AceLocale-3.0\AceLocale-3.0.xml
 libs\AceDB-3.0\AceDB-3.0.xml
 libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\AceConfig-3.0\AceConfig-3.0.xml
-libs\AceLocale-3.0\AceLocale-3.0.xml
 
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibQTip-1.0\LibQTip-1.0.lua
 
 locales\en.lua
 locales\fr.lua
+locales\de.lua
 Broker_Cash.lua

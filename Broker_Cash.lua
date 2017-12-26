@@ -1,18 +1,23 @@
--- Broker: Cash v1.4.1
+-- Broker: Cash v2.0.0-beta
 -- By Septh, BSD licenced
 --
+-- GLOBALS: LibStub, Broker_CashDB
 
--- Upvalues
+-- API upvalues
 local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
 local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
 local CreateColor, tDeleteItem = CreateColor, tDeleteItem
 local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall
 
--- Environnement
--- GLOBALS: LibStub
+-- TODO: A virer
+local DEBUG = UnitName('player') == 'Bankasepth'
+
+-- Environment
 local addonName, addonTable = ...
-local addon   = LibStub('AceAddon-3.0'):NewAddon(addonTable, addonName, 'AceConsole-3.0', 'AceEvent-3.0')
+local addon   = LibStub('AceAddon-3.0'):NewAddon(addonTable, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
 local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
+
+-- Bibliothèques
 local libLDB  = LibStub('LibDataBroker-1.1')
 local libQTip = LibStub('LibQTip-1.0')
 
@@ -27,7 +32,7 @@ local MINUS_BUTTON_STRING = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|
 -- Montants
 local SILVER_PER_GOLD   = SILVER_PER_GOLD
 local COPPER_PER_SILVER = COPPER_PER_SILVER
-local COPPER_PER_GOLD   = COPPER_PER_SILVER * SILVER_PER_GOLD
+local COPPER_PER_GOLD   = COPPER_PER_GOLD
 
 -- Couleurs
 local COLOR_RED    = CreateColor(0.8, 0.1, 0.1, 1)
@@ -36,15 +41,13 @@ local COLOR_YELLOW = CreateColor(0.8, 0.8, 0.1, 1)
 
 -- Gestion des statistiques
 local FIRST_DAY_OF_WEEK = 2	-- Lundi
-local dayOfYear = 0
-local startOfDay, startOfWeek, startOfMonth, startOfYear
+local resetTimer
 
 -- Données des personnages
 local currentChar    = UnitName('player')
 local currentRealm   = GetRealmName()
 local currentCharKey = currentChar .. ' - ' .. currentRealm
-local sessionMoney   = 0
-local allRealms, allChars, realmsWealth = {}, {}, {}
+local allRealms, allChars, realmsWealths = {}, {}, {}
 
 -- Données sauvegardées
 local sv_defaults = {
@@ -62,6 +65,7 @@ local sv_defaults = {
         since     = 0,
         lastSaved = 0,
         money     = 0,
+        session   = 0,
         day       = 0,
         week      = 0,
         month     = 0,
@@ -81,8 +85,8 @@ local options_panel = {
             name  = L['Options'],
             type  = 'group',
             order = 1,
-            get   = 'ConfigPanel_GetOpt',
-            set   = 'ConfigPanel_SetOpt',
+            get   = 'OptionsPanel_GetOpt',
+            set   = 'OptionsPanel_SetOpt',
             args  = {
                 ldb = {
                     name   = L['OPTIONS_LDB'],
@@ -192,7 +196,7 @@ local options_panel = {
                     args   = {
                         count = {
                             type     = 'description',
-                            name     = function() return addon:ConfigPanel_GetNumSelected() end,
+                            name     = function() return addon:OptionsPanel_GetNumSelected() end,
                             width    = 'fill',				-- Valeur magique dans AceConfigDialog-3.0
                             order    = 1,
                             fontSize = 'medium',
@@ -201,17 +205,17 @@ local options_panel = {
                             type     = 'execute',
                             name     = L['Reset'],
                             order    = 2,
-                            disabled = 'ConfigPanel_IsActionDisabled',
-                            confirm  = 'ConfigPanel_ConfirmAction',
-                            func     = 'ConfigPanel_DoResetCharacters',
+                            disabled = 'OptionsPanel_IsActionDisabled',
+                            confirm  = 'OptionsPanel_ConfirmAction',
+                            func     = 'OptionsPanel_DoResetCharacters',
                         },
                         delete = {
                             type     = 'execute',
                             name     = L['Delete'],
                             order    = 3,
-                            disabled = 'ConfigPanel_IsActionDisabled',
-                            confirm  = 'ConfigPanel_ConfirmAction',
-                            func     = 'ConfigPanel_DoDeleteCharacters',
+                            disabled = 'OptionsPanel_IsActionDisabled',
+                            confirm  = 'OptionsPanel_ConfirmAction',
+                            func     = 'OptionsPanel_DoDeleteCharacters',
                         },
                     }
                 }
@@ -284,9 +288,9 @@ end
 -------------------------------------------------------------------------------
 
 -- Supprime les personnages sélectionnés des données sauvegardées
-function addon:ConfigPanel_DoDeleteCharacters(info, value)
-    local sv = self.sv
+function addon:OptionsPanel_DoDeleteCharacters(info, value)
 
+    local sv = self.sv
     for key in pairs(selectedToons) do
         sv.char[key] = nil
         sv.profileKeys[key] = nil
@@ -308,33 +312,36 @@ function addon:ConfigPanel_DoDeleteCharacters(info, value)
     -- Recalcule la richesse des royaumes
     self:AuditRealms()
 
-    -- Déselectionne tous les personnages et redessine le panneau des options
+    -- Déselectionne tous les personnages
     numSelectedToons = #wipe(selectedToons)
-    LibStub('AceConfigRegistry-3.0'):NotifyChange(addonName)
 end
 
 -- Réinitialise les statistiques des personnages sélectionnés
-function addon:ConfigPanel_DoResetCharacters(info, value)
-    local sv = self.sv
+function addon:OptionsPanel_DoResetCharacters(info, value)
 
+    -- Le perso courant ?
+    if selectedToons[currentCharKey] then
+        selectedToons[currentCharKey] = nil
+
+        self.db.char.money   = GetMoney()
+        self.db.char.session = 0
+        self.db.char.day     = 0
+        self.db.char.week    = 0
+        self.db.char.month   = 0
+        self.db.char.year    = 0
+        self.db.char.ever    = 0
+    end
+
+    -- Tous les autres...
+    local sv = self.sv.char
     for key in pairs(selectedToons) do
-        -- sv.char[key].lastSaved = time()
-        if key == currentCharKey then
-            sv.char[key].money = GetMoney()
-            sv.char[key].day   = 0
-            sv.char[key].week  = 0
-            sv.char[key].month = 0
-            sv.char[key].year  = 0
-            sv.char[key].ever  = 0
-            sessionMoney       = 0
-        else
-            sv.char[key].money = 0
-            sv.char[key].day   = nil
-            sv.char[key].week  = nil
-            sv.char[key].month = nil
-            sv.char[key].year  = nil
-            sv.char[key].ever  = nil
-        end
+        sv[key].money   = nil
+        sv[key].session = nil
+        sv[key].day     = nil
+        sv[key].week    = nil
+        sv[key].month   = nil
+        sv[key].year    = nil
+        sv[key].ever    = nil
     end
 
     -- Recalcule la richesse des royaumes
@@ -345,7 +352,7 @@ function addon:ConfigPanel_DoResetCharacters(info, value)
 end
 
 -- Affiche une demande de confirmation avant réinitialisation/suppression
-function addon:ConfigPanel_ConfirmAction(info)
+function addon:OptionsPanel_ConfirmAction(info)
 
     -- str = RESET_TOON(S) ou DELETE_TOON(S)
     local str = L[info[#info]:upper() .. '_TOON' .. (numSelectedToons > 1 and 'S' or '')]
@@ -363,17 +370,17 @@ function addon:ConfigPanel_ConfirmAction(info)
 end
 
 -- Vérifie si les boutons Supprimer et Réinitialiser doivent être désactivés
-function addon:ConfigPanel_IsActionDisabled(info)
+function addon:OptionsPanel_IsActionDisabled(info)
     -- True si (aucune sélection) OU (le bouton est 'Supprimer' ET le personnage courant fait partie des sélectionnés)
     return numSelectedToons == 0 or (info[#info] == 'delete' and selectedToons[currentCharKey])
 end
 
 -- Sélectionne / désélectionne un personnage
-function addon:ConfigPanel_IsToonSelected(info, key)
+function addon:OptionsPanel_IsToonSelected(info, key)
     return selectedToons[MakeCharKey(key, info[#info])]
 end
 
-function addon:ConfigPanel_SetToonSelected(info, key, value)
+function addon:OptionsPanel_SetToonSelected(info, key, value)
     key = MakeCharKey(key, info[#info])
     if value then
         selectedToons[key] = true
@@ -385,26 +392,30 @@ function addon:ConfigPanel_SetToonSelected(info, key, value)
 end
 
 -- Met à jour le nombre de personnages sélectionnés dans le dialogue
-function addon:ConfigPanel_GetNumSelected(info)
-    local num = numSelectedToons or 0
-    local fmt = L['NUMSELECTED_' .. (num > 1 and 'X' or num)]
+function addon:OptionsPanel_GetNumSelected(info)
+    local fmt = L['NUMSELECTED_' .. (numSelectedToons > 1 and 'X' or numSelectedToons)]
     return fmt:format(num)
 end
 
-function addon:ConfigPanel_GetOpt(info)
+function addon:OptionsPanel_GetOpt(info)
     return self.opts[info[#info-1]][info[#info]]
 end
 
-function addon:ConfigPanel_SetOpt(info, value)
+function addon:OptionsPanel_SetOpt(info, value)
     self.opts[info[#info-1]][info[#info]] = value
 
-    -- Rafraîchit l'icône LDB
+    -- Met à jour le texte du LDB
     if info[#info-1] == 'ldb' then
-        self:PLAYER_MONEY()
+        self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
     end
 end
 
 -- Affiche le dialogue de réinitialisation/suppression de personnages
+function addon:ToggleOptionsPanel()
+    -- TODO
+    self:ShowOptionsPanel()
+end
+
 function addon:ShowOptionsPanel(msg)
 
     -- Masque le tooltip
@@ -420,8 +431,8 @@ function addon:ShowOptionsPanel(msg)
                 type   = 'multiselect',
                 name   = realm,
                 style  = 'radio',
-                get    = 'ConfigPanel_IsToonSelected',
-                set    = 'ConfigPanel_SetToonSelected',
+                get    = 'OptionsPanel_IsToonSelected',
+                set    = 'OptionsPanel_SetToonSelected',
                 values = {},
                 order  = 10 + i
             }
@@ -442,9 +453,7 @@ end
 -- Gestion du tooltip secondaire
 -------------------------------------------------------------------------------
 function addon:HideSubTooltip()
-    if subTooltip then
-        subTooltip:Release()
-    end
+    if subTooltip then subTooltip:Release() end
     subTooltip = nil
 end
 
@@ -454,7 +463,7 @@ function addon:PrepareSubTooltip(mainTooltipLine)
 
     -- Affiche (ou déplace) le sous-tooltip
     if not subTooltip then
-        subTooltip = libQTip:Acquire('BrokerCash_SubTooltip', 2, 'LEFT', 'RIGHT')
+        subTooltip = libQTip:Acquire(self:GetName() .. '_SubTooltip', 2, 'LEFT', 'RIGHT')
         subTooltip:SetFrameLevel(mainTooltipLine:GetFrameLevel() + 1)
     end
 
@@ -478,6 +487,7 @@ function addon:PrepareSubTooltip(mainTooltipLine)
 end
 
 -------------------------------------------------------------------------------
+
 -- Affiche le sous-tooltip pour un royaume
 function addon:ShowRealmTooltip(realmLineFrame, selectedRealm)
 
@@ -490,8 +500,6 @@ function addon:ShowRealmTooltip(realmLineFrame, selectedRealm)
     for key,data in pairs(self.sv.char) do
         local _, realm = SplitCharKey(key)
         if realm == selectedRealm then
-            self:CheckStatResets(data, key == currentCharKey)
-
             realmDay   = realmDay   + (data.day   or 0)
             realmWeek  = realmWeek  + (data.week  or 0)
             realmMonth = realmMonth + (data.month or 0)
@@ -510,6 +518,7 @@ function addon:ShowRealmTooltip(realmLineFrame, selectedRealm)
 end
 
 -------------------------------------------------------------------------------
+
 -- Affiche le sous-tooltip pour un personnage
 function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 
@@ -519,24 +528,22 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 
     -- Affiche les données du personnage
     local data = self.sv.char[selectedCharKey]
-    self:CheckStatResets(data, selectedCharKey == currentCharKey)
 
     local ln
     ln = stt:AddLine(); stt:SetCell(ln, 1, selectedCharKey, 2)
     ln = stt:AddLine(); stt:SetCell(ln, 1, L['RECORDED_SINCE']:format(date(L['DATE_FORMAT'],      data.since)),     2)
     ln = stt:AddLine(); stt:SetCell(ln, 1,     L['LAST_SAVED']:format(date(L['DATE_TIME_FORMAT'], data.lastSaved)), 2)
-
     stt:AddLine(''); stt:AddSeparator(); stt:AddLine('')
 
     local showSilverAndCopper = self.opts.menu.showSilverAndCopper
     if selectedCharKey == currentCharKey then
-        stt:AddLine(L['Current Session'], GetRelativeMoneyString(sessionMoney, showSilverAndCopper))
+        stt:AddLine(L['Current Session'], GetRelativeMoneyString(self.db.char.session, showSilverAndCopper))
     end
-    stt:AddLine(L['Today'],      GetRelativeMoneyString(data.day,   showSilverAndCopper))
-    stt:AddLine(L['This week'],  GetRelativeMoneyString(data.week,  showSilverAndCopper))
-    stt:AddLine(L['This month'], GetRelativeMoneyString(data.month, showSilverAndCopper))
-    stt:AddLine(L['This year'],  GetRelativeMoneyString(data.year,  showSilverAndCopper))
-    stt:AddLine(L['Ever'],       GetRelativeMoneyString(data.ever,  showSilverAndCopper))
+    stt:AddLine(L['Today'],      GetRelativeMoneyString(data.day   or 0, showSilverAndCopper))
+    stt:AddLine(L['This week'],  GetRelativeMoneyString(data.week  or 0, showSilverAndCopper))
+    stt:AddLine(L['This month'], GetRelativeMoneyString(data.month or 0, showSilverAndCopper))
+    stt:AddLine(L['This year'],  GetRelativeMoneyString(data.year  or 0, showSilverAndCopper))
+    stt:AddLine(L['Ever'],       GetRelativeMoneyString(data.ever  or 0, showSilverAndCopper))
     stt:Show()
 end
 
@@ -546,17 +553,16 @@ end
 function addon:HideMainTooltip()
     self:HideSubTooltip()
 
-    if mainTooltip then
-        mainTooltip:Release()
-
-        -- Cache le surlignage
-        highlightTexture:Hide()
-        highlightTexture:SetParent(UIParent)
-    end
+    if mainTooltip then mainTooltip:Release() end
     mainTooltip = nil
+
+    -- Cache le surlignage
+    highlightTexture:Hide()
+    highlightTexture:SetParent(UIParent)
 end
 
 -------------------------------------------------------------------------------
+
 -- Déplie/replie un royaume dans le tooltip
 local function MainTooltip_OnClickRealm(realmLineFrame, realm, button)
     unfoldedRealms[realm] = not unfoldedRealms[realm]
@@ -564,62 +570,66 @@ local function MainTooltip_OnClickRealm(realmLineFrame, realm, button)
 end
 
 -- Affiche le tooltip secondaire pour un royaume
-local function MainTooltip_OnLeaveRealm(realmLineFrame)
-    addon:HideSubTooltip()
-end
-
 local function MainTooltip_OnEnterRealm(realmLineFrame, realm)
     addon:ShowRealmTooltip(realmLineFrame, realm)
 end
 
--- Affiche le tooltip secondaire pour un personnage
-local function MainTooltip_OnLeaveChar(charLineFrame)
+local function MainTooltip_OnLeaveRealm(realmLineFrame)
     addon:HideSubTooltip()
 end
 
+-- Affiche le tooltip secondaire pour un personnage
 local function MainTooltip_OnEnterChar(charLineFrame, charKey)
     addon:ShowCharTooltip(charLineFrame, charKey)
 end
 
+local function MainTooltip_OnLeaveChar(charLineFrame)
+    addon:HideSubTooltip()
+end
+
 -- Remplit le tooltip principal
 function addon:UpdateMainTooltip()
-    local showSilverAndCopper = self.opts.menu.showSilverAndCopper
-    local mtt = mainTooltip
-    local ln, rln
+    local mtt, ln, rln, showSilverAndCopper = mainTooltip, 0, 0, self.opts.menu.showSilverAndCopper
+    if not mtt then return end
 
     -- Construit le tooltip
     mtt:Hide()
     mtt:Clear()
     mtt:SetCellMarginV(2)
 
-    -- Header
+    ---------------------------------------------------------------------------
+    -- 1/ Le header
+    ---------------------------------------------------------------------------
     mtt:AddHeader(L['Name'], L['Cash'])
     mtt:AddSeparator(); mtt:AddLine('')
 
-    -- Personnage courant en premier
-    self:CalcResetDates()
-    self:CheckStatResets(self.db.char, true)
-
+    ---------------------------------------------------------------------------
+    -- 2/ Le personnage courant
+    ---------------------------------------------------------------------------
     mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(sessionMoney,       showSilverAndCopper), GameTooltipTextSmall)
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Today'],           GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,   showSilverAndCopper), GameTooltipTextSmall)
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This week'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,  showSilverAndCopper), GameTooltipTextSmall)
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This month'],      GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month, showSilverAndCopper), GameTooltipTextSmall)
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This year'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,  showSilverAndCopper), GameTooltipTextSmall)
-    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Ever'],            GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.ever,  showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.session, showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Today'],           GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.day,     showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This week'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.week,    showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This month'],      GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.month,   showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['This year'],       GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.year,    showSilverAndCopper), GameTooltipTextSmall)
+    ln = mtt:AddLine(); mtt:SetCell(ln, 1, L['Ever'],            GameTooltipTextSmall, 1, 20); mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.ever,    showSilverAndCopper), GameTooltipTextSmall)
     mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
 
+    ---------------------------------------------------------------------------
+    -- 3/ Tous les personnages, groupés par royaume
+    ---------------------------------------------------------------------------
+
     -- Trie les royaumes par ordre décroissant de richesse
-    -- (fait ici car l'ordre peut changer à tout moment)
+    -- (fait ici car l'ordre peut changer à tout moment selon le perso courant)
     table.sort(allRealms, function(r1, r2)
-        return realmsWealth[r1] > realmsWealth[r2]
+        return realmsWealths[r1] > realmsWealths[r2]
     end)
 
     -- Ajoute tous les personnages, royaume par royaume
-    local sv, totalMoney = self.sv, 0
+    local sv, totalMoney = self.sv.char, 0
+    local unfolded, realmMoney
     for _,realm in ipairs(allRealms) do
-        local unfolded = unfoldedRealms[realm]
-        local realmMoney = realmsWealth[realm]
+        unfolded, realmMoney = unfoldedRealms[realm], realmsWealths[realm]
 
         -- Comptabilise la richesse par totale
         totalMoney = totalMoney + realmMoney
@@ -638,18 +648,12 @@ function addon:UpdateMainTooltip()
             -- Trie les personnages du royaume par ordre décroissant de richesse
             -- (fait ici car l'ordre peut changer à tout instant)
             table.sort(allChars[realm], function(n1, n2)
-                n1 = MakeCharKey(n1, realm)
-                n2 = MakeCharKey(n2, realm)
-                return ((sv.char[n1].money) or 0) > ((sv.char[n2].money) or 0)
+                return ((sv[MakeCharKey(n1, realm)].money) or 0) > ((sv[MakeCharKey(n2, realm)].money) or 0)
             end)
 
             for _,name in ipairs(allChars[realm]) do
-                local key  = MakeCharKey(name, realm)
-                local data = sv.char[key]
-                local money = data.money or 0
-
-                -- Vérifie s'il faut réinitialiser les statistiques de ce personnage
-                self:CheckStatResets(data, key == currentCharKey)
+                local key = MakeCharKey(name, realm)
+                local money = sv[key].money or 0
 
                 -- Ajoute le personnage (avec une marge à gauche)
                 ln = mtt:AddLine()
@@ -662,7 +666,9 @@ function addon:UpdateMainTooltip()
         end
     end
 
-    -- Ajoute le grand total
+    ---------------------------------------------------------------------------
+    -- 4/ Ajoute le grand total
+    ---------------------------------------------------------------------------
     mtt:AddLine(''); mtt:AddSeparator(); mtt:AddLine('')
     mtt:AddLine(L['Total'], GetAbsoluteMoneyString(totalMoney, showSilverAndCopper))
 
@@ -677,7 +683,7 @@ function addon:ShowMainTooltip(LDBFrame)
     if self.opts.menu.disableInCombat and InCombatLockdown() then return end
 
     if not mainTooltip then
-        mainTooltip = libQTip:Acquire('BrokerCash_MainTooltip', 2, 'LEFT', 'RIGHT')
+        mainTooltip = libQTip:Acquire(self:GetName() .. '_MainTooltip', 2, 'LEFT', 'RIGHT')
         mainTooltip:SmartAnchorTo(LDBFrame)
         mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 
@@ -693,118 +699,108 @@ function addon:ShowMainTooltip(LDBFrame)
 end
 
 -------------------------------------------------------------------------------
--- Gestion des statistiques des personnages
+-- Gestion des statistiques
 -------------------------------------------------------------------------------
+function addon:AuditRealms()
+    self:Debug('AuditRealms()')
+    local now = date('*t')
 
--- Calcule les dates de réinitialisation des statistiques
-local function days_in_month(m, y)
-	-- http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
-	return date('*t', time( { year = y, month = m + 1, day = 0 } ))['day']
-end
-
-function addon:CalcResetDates()
-
-    -- Seulement si on a changé de jour depuis le dernier calcul
-    local today = date('*t')
-    if dayOfYear == today.yday then return false end
-    dayOfYear = today.yday
-
-    -- Toutes les limites sont fixées à 00:00:00
-    -- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
-    local limit = {
-        hour = 0,
-        min  = 0,
-        sec  = 0
-    }
+    ---------------------------------------------------------------------------
+    -- 1/ Calcule les dates de réinitialisation des statistiques
+    ---------------------------------------------------------------------------
+    local reset, startOfDay, startOfWeek, startOfMonth, startOfYear
 
     -- Début du jour courant
-    limit.day   = today.day
-    limit.month = today.month
-    limit.year  = today.year
-    startOfDay  = time(limit)
-
-    -- Début de la semaine courante
-    local numDaysBack
-    if today.wday == FIRST_DAY_OF_WEEK then
-        numDaysBack = 0 -- Une nouvelle semaine commence aujourd'hui
-    elseif today.wday > FIRST_DAY_OF_WEEK then
-        numDaysBack = today.wday - FIRST_DAY_OF_WEEK
-    else
-        numDaysBack = 7 - today.wday
-    end
-    limit.day   = today.day - numDaysBack
-    limit.month = today.month
-    limit.year  = today.year
-    if limit.day < 1 then
-        limit.month = limit.month - 1
-        if limit.month < 1 then
-            limit.month = 12
-            limit.year = limit.year - 1
-        end
-        limit.day = days_in_month(limit.month, limit.year) + limit.day
-    end
-    startOfWeek = time(limit)
+    reset = {
+        day   = now.day,
+        month = now.month,
+        year  = now.year,
+        hour  = 0,	-- Toutes les limites sont fixées à 00:00:00
+        min   = 0,	-- TODO: Gérer l'heure d'été/hiver ? Si oui, comment ?
+        sec   = 0
+    }
+    startOfDay = time(reset)
 
     -- Début du mois courant
-    limit.day    = 1
-    limit.month  = today.month
-    limit.year   = today.year
-    startOfMonth = time(limit)
+    reset.day    = 1
+    startOfMonth = time(reset)
 
     -- Début de l'année courante
-    limit.day   = 1
-    limit.month = 1
-    limit.year  = today.year
-    startOfYear = time(limit)
+    reset.month = 1
+    startOfYear = time(reset)
 
-    -- Les dates ont changé
-    return true
-end
-
--------------------------------------------------------------------------------
--- Réinitialise les stats qui ont dépassé leur date limite
-function addon:CheckStatResets(charData, isCurrentChar)
-
-    -- Réinitilise à 0 pour le personnage courant, à nil pour les autres afin de rester consistant avec AceDB
-    local charLastSaved, resetValue = charData.lastSaved or 0, isCurrentChar and 0 or nil
-
-    if charLastSaved < startOfDay   then charData.day   = resetValue end -- Quotidienne
-    if charLastSaved < startOfWeek  then charData.week  = resetValue end -- Hebdomadaire
-    if charLastSaved < startOfMonth then charData.month = resetValue end -- Mensuelle
-    if charLastSaved < startOfYear  then charData.year  = resetValue end -- Annuelle
-
-    -- Ajoute le champ 'ever' aux personnages qui ne l'ont pas
-    if not charData.ever then
-        charData.ever = charData.year or charData.month or charData.week or charData.day or resetValue
+    -- Début de la semaine courante
+    local numDaysBack = now.wday - FIRST_DAY_OF_WEEK
+    if numDaysBack < 0 then
+        numDaysBack = 7 - now.wday
     end
-end
+    reset.day   = now.day - numDaysBack
+    reset.month = now.month
+    reset.year  = now.year
+    if reset.day < 1 then
+        reset.month = reset.month - 1
+        if reset.month < 1 then
+            reset.month = 12
+            reset.year = reset.year - 1
+        end
+        -- Nb jours dans un mois donné : http://lua-users.org/wiki/DayOfWeekAndDaysInMonthExample
+        reset.day = date('*t', time( { day = 0, month = reset.month + 1, year = reset.year } ))['day']
+    end
+    startOfWeek = time(reset)
 
--------------------------------------------------------------------------------
--- Calcule la richesse globale de chaque royaume
-function addon:AuditRealms()
+    ---------------------------------------------------------------------------
+    -- 2/ Recense tous les personnages de tous les royaumes, réinitialise leurs stats si nécessaire
+    --    et compte la richesse globale de chaque royaume.
+    --    NB: les tables ne sont pas triées ici mais au moment de l'affichage du tooltip
+    ---------------------------------------------------------------------------
+    local char, realm, lastSaved, resetValue
 
-    -- Recense les personnages connus
-    table.wipe(allRealms)       -- { 'royaume1', 'royaume2', ..., 'royaumeN' }
-    table.wipe(allChars)        -- { ['royaume1'] = { 'perso1', ..., 'persoN' }, ..., ['royaumeN] = {...} }
-    table.wipe(realmsWealth)    -- { ['royaume1'] = XXX, ..., ['royaumeN] = ZZZ }
+    table.wipe(allRealms)
+    table.wipe(allChars)
+    table.wipe(realmsWealths)
 
-    self:CalcResetDates()
-    for charKey,charData in pairs(self.sv.char) do
-
-        -- Vérifie s'il faut réinitialier les stats de ce personnage
-        self:CheckStatResets(charData, charKey == currentCharKey)
+    for key,data in pairs(self.sv.char) do
+        char, realm = SplitCharKey(key)
 
         -- Recense ce personnage
-        local name, realm = SplitCharKey(charKey)
-        if allChars[realm] then
-            table.insert(allChars[realm], name)
-        else
+        if not allChars[realm] then
             table.insert(allRealms, realm)
-            allChars[realm] = { name }
+            allChars[realm] = {}
+            realmsWealths[realm] = 0
         end
+        table.insert(allChars[realm], char)
+        realmsWealths[realm] = realmsWealths[realm] + (data.money or 0)
 
-        -- Comptabilise la richesse de chaque royaume
-        realmsWealth[realm] = (realmsWealth[realm] or 0) + (charData.money or 0)
+        -- Réinitialise ses statistiques si nécessaire
+        lastSaved, resetValue = (data.lastSaved or 0), key == currentCharKey and 0 or nil
+        if lastSaved < startOfDay   then data.day   = resetValue end
+        if lastSaved < startOfWeek  then data.week  = resetValue end
+        if lastSaved < startOfMonth then data.month = resetValue end
+        if lastSaved < startOfYear  then data.year  = resetValue end
+    end
+
+    -- Rafraîchit le tooltip s'il est affiché
+    self:UpdateMainTooltip()
+
+    ---------------------------------------------------------------------------
+    -- 3/ Relance le chronomètre jusqu'à demain minuit pour la prochaine vérification des stats
+    --    NB: Il serait plus simple d'utiliser :CancelAllTimers(), mais AceTimer ne réutilise pas
+    --    les timers annulés (il en crée un nouveau à chaque fois). Vérifier (avec :TimeLeft())
+    --    si on a un timer en cours est plus efficient.
+    ---------------------------------------------------------------------------
+    self:Debug('Timeleft = %s', self:TimeLeft(resetTimer))
+    if self:TimeLeft(resetTimer) <= 0 then
+        if DEBUG then
+            now.min  = now.min + 1
+            now.sec  = 0
+        else
+            now.day  = now.day + 1	-- Demain
+            now.hour = 0			-- à 0 heure
+            now.min  = 0			-- 0 minute
+            now.sec  = 1			-- et 1 seconde (marge de sécurité)
+        end
+        resetTimer = self:ScheduleTimer('AuditRealms', difftime(time(now), time()))
+        self:Printf('Reset dans %s', SecondsToTime(self:TimeLeft(resetTimer)))
     end
 end
 
@@ -812,71 +808,63 @@ end
 -- Mise à jour des données du personnage courant à chaque gain ou perte d'argent
 -------------------------------------------------------------------------------
 function addon:PLAYER_MONEY(evt)
+    self:Print(evt)
 
-    -- Vérifie s'il faut réinitialiser les stats du personnage
-    -- A faire avant chaque dépense / rentrée d'argent
-    self:CalcResetDates()
-    self:CheckStatResets(self.db.char, true)
+    -- Calcule le gain/la perte d'or
+    local diff = GetMoney() - self.db.char.money
 
-    -- Enregistre la dépense / recette
-    local money = GetMoney()
-    local diff  = money - self.db.char.money
-
-    -- Met à jour la stat de session...
-    sessionMoney = sessionMoney + diff
-
-    -- Et les stats quotidienne/hebdomadaire/mensuelle/annuelle...
+    -- Met les stats à jour
+    for _,stat in ipairs( { 'money', 'session', 'day', 'week', 'month', 'year', 'ever' } ) do
+        self.db.char[stat] = self.db.char[stat] + diff
+    end
     self.db.char.lastSaved = time()
-    self.db.char.money     = money
-    self.db.char.day       = self.db.char.day   + diff
-    self.db.char.week      = self.db.char.week  + diff
-    self.db.char.month     = self.db.char.month + diff
-    self.db.char.year      = self.db.char.year  + diff
-    self.db.char.ever      = self.db.char.ever  + diff
 
-    -- Et la richesse du royaume actuel.
-    realmsWealth[currentRealm] = (realmsWealth[currentRealm] or 0) + diff
+    -- Met à jour la stat du royaume
+    realmsWealths[currentRealm] = realmsWealths[currentRealm] + diff
 
     -- Met à jour le texte du LDB
-    self.dataObject.text = GetAbsoluteMoneyString(money, self.opts.ldb.showSilverAndCopper)
+    self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
 end
 
 -------------------------------------------------------------------------------
--- Activation/désactivation de l'addon
--------------------------------------------------------------------------------
-function addon:OnDisable()
-    self:HideMainTooltip()
-end
+function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
+    self:Debug(evt, isLogin, isReload)
 
--------------------------------------------------------------------------------
-function addon:OnEnable()
+    -- Plus besoin de ça
+    self:UnregisterEvent(evt)
 
-    -- Sauve la richesse du personnage courant
-    -- (fait ici GetMoney() ne fonctionne pas avant PLAYER_ENTERING_WORLD)
-    if self.db.char.since == 0 then
-        self.db.char.since = time()     -- Première connexion avec ce personnage
-        self.db.char.money = GetMoney()
+    -- Initialise la stat de session si ce n'est pas un reload
+    if isLogin == true and isReload == false then
+        self.db.char.session = 0
     end
-    self:PLAYER_MONEY()
 
-    -- Pré-calcule la richesse de tous les royaumes connus
-    -- (fait ici car l'addon peut être désactivé / réactivé à tout moment)
-    self:AuditRealms()
+    -- Sauve le montant d'or actuel
+    self.db.char.money = GetMoney()
+    if self.db.char.since == 0 then
+        self.db.char.since = time()
+    end
+    self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
 
-    -- Surveille les événements
-    self:RegisterEvent('PLAYER_MONEY')
+    -- Minimise les imprécisions dues aux millisecondes
+    -- en attendant (le début de) la prochaine seconde
+    -- pour vérifier les stats et lancer le vrai timer
+    local now = date('*t')
+    now.sec = now.sec + 1
+    self:ScheduleTimer('AuditRealms', difftime(time(now), time()))
 end
 
 -------------------------------------------------------------------------------
 -- Initialisation
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
+    self:Debug('OnInitialize()')
+
+    -- Garde une référence directe sur les données sauvegardées "brutes"
+    Broker_CashDB = Broker_CashDB or {}
+    self.sv = Broker_CashDB
 
     -- Initialise AceDB
-    self.db = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
-
-    -- Garde une référence directe sur les données sauvegardées brutes
-    self.sv = _G.Broker_CashDB
+    self.db = LibStub('AceDB-3.0'):New(self.sv, sv_defaults, true)
 
     -- Conversion des options v1.3.3 => v1.4.0
     self.opts = self.db.global
@@ -892,21 +880,31 @@ function addon:OnInitialize()
     self.dataObject = libLDB:NewDataObject(addonName, {
         type    = 'data source',
         icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
-        text    = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper),   -- Ok même si première connexion
+        text    = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper),
         OnEnter = function(f) addon:ShowMainTooltip(f) end,
-        OnClick = function(f, b) addon:ShowOptionsPanel() end
+        OnClick = function(f, b) addon:ToggleOptionsPanel() end
     })
 
-    -- Commandes slash
+    -- Active les commandes slash
     for _,cmd in ipairs({ 'brokercash', 'bcash'--[[ , 'cash', 'bc' ]] }) do
         self:RegisterChatCommand(cmd, 'ShowOptionsPanel')
     end
+
+    -- Surveille les événements
+    self:RegisterEvent('PLAYER_ENTERING_WORLD')
+    self:RegisterEvent('PLAYER_MONEY')
 end
 
 -----------------------------------------------------------------------------
+function addon:Debug(...)
+    if DEBUG then self:Printf(...) end
+end
+
+--[[
+-----------------------------------------------------------------------------
 -- GLOBALS: IsAddOnLoaded, LoadAddOn, DevTools_Dump
---[[ function addon:Dump(x)
+function addon:Dump(x)
     if not IsAddOnLoaded('Blizzard_DebugTools') then LoadAddOn('Blizzard_DebugTools') end
     DevTools_Dump(x)
-end ]]
---
+end
+--]]

@@ -3,8 +3,8 @@
 ## Notes: Keeping track of your gold incomes and outcomes, globally
 ## Version: 2.0.0-beta
 ## Author: Septh
-## OptionalDeps: !Swatter, !BugGrabber, LibStub, Ace3
-## SavedVariables: Broker_CashDB
+## OptionalDeps: !Swatter, !BugGrabber, Ace3
+## SavedVariables: Broker_CashDB, Broker_CashDB2
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
@@ -13,7 +13,6 @@ libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\AceLocale-3.0\AceLocale-3.0.xml
 libs\AceDB-3.0\AceDB-3.0.xml
-libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\AceTimer-3.0\AceTimer-3.0.xml

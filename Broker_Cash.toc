@@ -4,7 +4,7 @@
 ## Version: 2.0.0-beta
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
-## SavedVariables: Broker_CashDB, Broker_CashDB2
+## SavedVariables: Broker_CashDB, Broker_CashDB_Backup
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua

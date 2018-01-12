@@ -1,9 +1,9 @@
 -- Broker: Cash v2.0.0-beta
 -- By Septh, BSD licenced
 --
--- GLOBALS: LibStub, Broker_CashDB, Broker_CashDB2
+-- GLOBALS: LibStub, Broker_CashDB, Broker_CashDB_Backup
 
--- API upvalues
+-- API
 local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
 local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
 local CreateColor, CopyTable, tDeleteItem, SecondsToTime = CreateColor, CopyTable, tDeleteItem, SecondsToTime
@@ -11,11 +11,13 @@ local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipTex
 local GameMenuFrame, InterfaceOptionsFrame = GameMenuFrame, InterfaceOptionsFrame
 local SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER = SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER
 
--- Environment
-local addonName, addonTable = ...
-local addon = LibStub('AceAddon-3.0'):NewAddon(addonTable, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
-local L     = LibStub('AceLocale-3.0'):GetLocale(addonName)
-local DEBUG = GetRealmName() == 'Illidan' and UnitName('player') == 'Bankasepth'
+-- Environnement
+local addonName, addonSpace = ...
+local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
+local VERSION = GetAddOnMetadata(addonName, 'Version') or ''
+local BETA    = VERSION:find('beta', 1)
+local VERBOSE = GetRealmName() == 'Illidan' and UnitName('player') == 'Bankasepth'
 
 -- Bibliothèques
 local libLDB  = LibStub('LibDataBroker-1.1')
@@ -70,7 +72,7 @@ local sv_defaults = {
 
 -- Panneau des options
 local options_panel = {
-    name    = addonName .. ' v' .. GetAddOnMetadata(addonName, 'Version'),
+    name    = addonName .. ' v' .. VERSION,
     handler = addon,
     type    = 'group',
     childGroups = 'tab',
@@ -254,15 +256,15 @@ local function GetAbsoluteMoneyString(amount, showSilverAndCopper)
 
     local tbl, fmt = {}, ''
     if gold > 0 then
-        table.insert(tbl, BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING)
+        tbl[#tbl + 1] = BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING
     end
     if showSilverAndCopper or (gold == 0) then
         if silver > 0 then
             fmt = (gold == 0) and '%d%s' or '%02d%s'
-            table.insert(tbl, fmt:format(silver, SILVER_ICON_STRING))
+            tbl[#tbl + 1] = fmt:format(silver, SILVER_ICON_STRING)
         end
         fmt = (gold + silver == 0) and '%d%s' or '%02d%s'
-        table.insert(tbl, fmt:format(copper, COPPER_ICON_STRING))
+        tbl[#tbl + 1] = fmt:format(copper, COPPER_ICON_STRING)
     end
     return table.concat(tbl, ' ')
 end
@@ -349,18 +351,18 @@ end
 function addon:OptionsPanel_ConfirmAction(info)
 
     -- str = RESET_TOON(S) ou DELETE_TOON(S)
-    local str = L[info[#info]:upper() .. '_TOON' .. (numSelectedToons > 1 and 'S' or '')]
-    str = str:format(numSelectedToons)
+    local str = info[#info]:upper() .. '_TOON' .. (numSelectedToons > 1 and 'S' or '')
+    str = L[str]:format(numSelectedToons)
 
     -- Construit la demande de confirmation
-    local toons = {}
+    local tbl = {}
     for k in pairs(selectedToons) do
-        table.insert(toons, k)
+        tbl[#tbl + 1] = k
     end
-    table.sort(toons, function(t1, t2)
+    table.sort(tbl, function(t1, t2)
         return InvertCharKey(t1) < InvertCharKey(t2)
     end)
-    return str .. '\n\n' .. table.concat(toons, '\n') .. '\n\n' .. L['Are you sure?']
+    return str .. '\n\n' .. table.concat(tbl, '\n') .. '\n\n' .. L['Are you sure?']
 end
 
 -- Vérifie si les boutons Supprimer et Réinitialiser doivent être désactivés
@@ -370,11 +372,11 @@ function addon:OptionsPanel_IsActionDisabled(info)
 end
 
 -- Sélectionne / désélectionne un personnage
-function addon:OptionsPanel_IsToonSelected(info, key)
-    return selectedToons[MakeCharKey(key, info[#info])]
+function addon:OptionsPanel_IsToonSelected(info, opt)
+    return selectedToons[MakeCharKey(opt, info[#info])]
 end
-function addon:OptionsPanel_SetToonSelected(info, key, value)
-    key = MakeCharKey(key, info[#info])
+function addon:OptionsPanel_SetToonSelected(info, opt, value)
+    local key = MakeCharKey(opt, info[#info])
     if value then
         selectedToons[key] = true
         numSelectedToons   = numSelectedToons + 1
@@ -386,8 +388,8 @@ end
 
 -- Met à jour le nombre de personnages sélectionnés dans le dialogue
 function addon:OptionsPanel_GetNumSelected(info)
-    local fmt = L['NUMSELECTED_' .. (numSelectedToons > 1 and 'X' or numSelectedToons)]
-    return fmt:format(numSelectedToons)
+    local fmt = 'NUMSELECTED_' .. (numSelectedToons > 1 and 'X' or numSelectedToons)
+    return L[fmt]:format(numSelectedToons)
 end
 
 -- Gestion des checkboxes
@@ -395,9 +397,10 @@ function addon:OptionsPanel_GetOpt(info)
     return self.opts[info[#info-1]][info[#info]]
 end
 function addon:OptionsPanel_SetOpt(info, value)
+    -- info[#info - 1] = 'menu' ou 'ldb', info[#info] = l'option cliquée
     self.opts[info[#info-1]][info[#info]] = value
 
-    -- Met à jour le texte du LDB
+    -- Met à jour le texte du LDB le cas échéant
     if info[#info-1] == 'ldb' then
         self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
     end
@@ -408,11 +411,11 @@ end
 --    ShowOptionsPanel() est appelée par ToggleOptionsPanel() et par les commandes slash
 --  ToggleOptionsPanel() est appelée quand on clique sur l'icône LDB
 function addon:BuildOptionsPanel()
-    if DEBUG then self:Print('BuildOptionsPanel()') end
+    if VERBOSE then self:Print('BuildOptionsPanel()') end
 
     -- Construit le dialogue si ce n'est pas déjà fait
     if not options_panel.args.database.args[currentRealm] then
-        if DEBUG then self:Print('-- Ajoute les personnages') end
+        if VERBOSE then self:Print('-- Ajoute les personnages') end
 
         -- Retrie les royaumes, mais cette fois par ordre alphabétique
         local orderedRealms = CopyTable(sortedRealms)
@@ -437,17 +440,17 @@ function addon:BuildOptionsPanel()
 end
 
 function addon:ShowOptionsPanel(msg)
-    if DEBUG then self:Print('ShowOptionsPanel()') end
+    if VERBOSE then self:Print('ShowOptionsPanel()') end
 
     -- Sauf si en combat ou si le menu ou les options standard sont affichés
-    if not InCombatLockdown() and not GameMenuFrame:IsShown() and not InterfaceOptionsFrame:IsShown() then
-        self:BuildOptionsPanel()
-        LibStub('AceConfigDialog-3.0'):Open(addonName)
-    end
+    if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame:IsShown() then return end
+
+    self:BuildOptionsPanel()
+    LibStub('AceConfigDialog-3.0'):Open(addonName)
 end
 
 function addon:ToggleOptionsPanel()
-    if DEBUG then self:Print('ToggleOptionsPanel()') end
+    if VERBOSE then self:Print('ToggleOptionsPanel()') end
 
     -- Masque le tooltip
     self:HideMainTooltip()
@@ -463,14 +466,6 @@ end
 
 -------------------------------------------------------------------------------
 -- Gestion du tooltip secondaire
--------------------------------------------------------------------------------
-function addon:HideSubTooltip()
-    if subTooltip then
-        subTooltip:Release()
-        subTooltip = nil
-    end
-end
-
 -------------------------------------------------------------------------------
 function addon:PrepareSubTooltip(mainTooltipLine)
     if not self.opts.menu.showSubTooltips then return end
@@ -552,20 +547,15 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
 end
 
 -------------------------------------------------------------------------------
--- Gestion du tooltip principal
--------------------------------------------------------------------------------
-function addon:HideMainTooltip()
-    self:HideSubTooltip()
-
-    if mainTooltip then
-        mainTooltip:Release()
-        mainTooltip = nil
+function addon:HideSubTooltip()
+    if subTooltip then
+        subTooltip:Release()
+        subTooltip = nil
     end
-
-    -- Cache le surlignage
-    highlightTexture:Hide()
 end
 
+-------------------------------------------------------------------------------
+-- Gestion du tooltip principal
 -------------------------------------------------------------------------------
 
 -- Déplie/replie un royaume dans le tooltip
@@ -702,10 +692,23 @@ function addon:ShowMainTooltip(LDBFrame)
 end
 
 -------------------------------------------------------------------------------
+function addon:HideMainTooltip()
+    self:HideSubTooltip()
+
+    if mainTooltip then
+        mainTooltip:Release()
+        mainTooltip = nil
+    end
+
+    -- Cache le surlignage
+    highlightTexture:Hide()
+end
+
+-------------------------------------------------------------------------------
 -- Gestion des statistiques globales
 -------------------------------------------------------------------------------
 function addon:AuditRealms()
-    if DEBUG then self:Print('AuditRealms()') end
+    if VERBOSE then self:Print('AuditRealms()') end
 
     ---------------------------------------------------------------------------
     -- Recense tous les personnages de tous les royaumes et compte la richesse globale de chaque royaume.
@@ -730,7 +733,7 @@ end
 
 -------------------------------------------------------------------------------
 function addon:CheckStatsResets()
-    if DEBUG then self:Print('CheckStatsResets()') end
+    if VERBOSE then self:Print('CheckStatsResets()') end
 
     local now = date('*t')
 
@@ -802,7 +805,7 @@ function addon:CheckStatsResets()
     ---------------------------------------------------------------------------
     -- 4/ Relance le chronomètre jusqu'à demain minuit pour la prochaine vérification
     ---------------------------------------------------------------------------
-    if DEBUG then
+    if VERBOSE then
         now.min  = now.min + 1
         now.sec  = 0
     else
@@ -812,14 +815,14 @@ function addon:CheckStatsResets()
         now.sec  = 1			-- et 1 seconde (marge de sécurité)
     end
     local resetTimer = self:ScheduleTimer('CheckStatsResets', difftime(time(now), time()))
-    if DEBUG then self:Printf('Prochain reset dans %s', SecondsToTime(self:TimeLeft(resetTimer))) end
+    if VERBOSE then self:Printf('Prochain reset dans %s', SecondsToTime(self:TimeLeft(resetTimer))) end
 end
 
 -------------------------------------------------------------------------------
 -- Gestion des stats du personnage courant
 -------------------------------------------------------------------------------
 function addon:PLAYER_MONEY(evt)
-    if DEBUG then self:Print(evt or 'PLAYER_MONEY (FAKE)') end
+    if VERBOSE then self:Print(evt) end
 
     -- Calcule le gain/la perte d'or
     local diff = GetMoney() - self.db.char.money
@@ -841,28 +844,28 @@ end
 -- Initialisation
 -------------------------------------------------------------------------------
 function addon:DeferredStart()
-    if DEBUG then self:Print('DeferredStart()') end
+    if VERBOSE then self:Print('DeferredStart()') end
 
     -- Vérifie les stats et lance le timer jusqu'à minuit
     self:CheckStatsResets()
 
     -- Sauve le montant d'or actuel
     self.db.char.money = GetMoney()
-    self:PLAYER_MONEY()
+    self:PLAYER_MONEY('FAKE_PLAYER_MONEY')
 
     -- Ecoute les événements
     self:RegisterEvent('PLAYER_MONEY')
 end
 
 function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
-    if DEBUG then self:Print(evt, isLogin, isReload) end
+    if VERBOSE then self:Print(evt, isLogin, isReload) end
 
     -- Plus besoin de ça
     self:UnregisterEvent(evt)
 
     -- Initialise la stat de session si ce n'est pas un reload
     if isLogin == true and isReload == false then
-        if DEBUG then self:Print('-- Nouvelle session (login)') end
+        if VERBOSE then self:Print('-- Nouvelle session (login)') end
         self.db.char.session = 0
     end
 
@@ -876,7 +879,7 @@ end
 
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
-    if DEBUG then self:Print('OnInitialize()') end
+    if VERBOSE then self:Print('OnInitialize()') end
 
     -- Initialise AceDB et garde une référence directe sur les données sauvegardées
     self.db   = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
@@ -928,17 +931,25 @@ function addon:OnInitialize()
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
 
     ---------------------------------------------------------------------------
+    -- Version beta : Backupe les SV par sécurité
     -- TODO: à virer
     ---------------------------------------------------------------------------
-    local ver = GetAddOnMetadata(addonName, 'Version')
-    if ver:find('beta', 1) then
-        self:Print(COLOR_RED:WrapTextInColorCode(ver))
+    if BETA then
+        self:Print(COLOR_YELLOW:WrapTextInColorCode(VERSION))
 
-        -- Version beta : Backupe les SV par sécurité
-        Broker_CashDB2 = Broker_CashDB2 or CopyTable(Broker_CashDB)
         self:RegisterChatCommand('cashback', function()
-            Broker_CashDB2 = CopyTable(Broker_CashDB)
-            self:Print(COLOR_RED:WrapTextInColorCode('SV copiées'))
+            _G.Broker_CashDB_Backup = {
+                ['date'] = date(),
+                ['DB'] = CopyTable(_G.Broker_CashDB)
+            }
+            addon:Print(COLOR_YELLOW:WrapTextInColorCode('SV saved, use /cashrestore to restore'))
         end)
+        self:RegisterChatCommand('cashrestore', function()
+            if not _G.Broker_CashDB_Backup or not _G.Broker_CashDB_Backup['DB'] then return end
+            addon:Printf('SV was last saved on %s', _G.Broker_CashDB_Backup['date'])
+            -- TODO
+        end)
+
+        if not _G.Broker_CashDB_Backup then _G.SlashCmdList['ACECONSOLE_CASHBACK']() end
     end
 end

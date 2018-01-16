@@ -1,7 +1,7 @@
--- Broker: Cash v2.0.0-beta
+-- Broker: Cash v2.0.0
 -- By Septh, BSD licenced
 --
--- GLOBALS: LibStub, Broker_CashDB, Broker_CashDB_Backup
+-- GLOBALS: LibStub, Broker_CashDB
 
 -- API
 local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
@@ -15,9 +15,7 @@ local SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER = SILVER_PER_GOLD, COP
 local addonName, addonSpace = ...
 local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
 local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
-local VERSION = GetAddOnMetadata(addonName, 'Version') or ''
-local BETA    = VERSION:find('beta', 1)
-local VERBOSE = GetRealmName() == 'Illidan' and UnitName('player') == 'Bankasepth'
+local VERSION = GetAddOnMetadata(addonName, 'Version')
 
 -- Bibliothèques
 local libLDB  = LibStub('LibDataBroker-1.1')
@@ -72,7 +70,7 @@ local sv_defaults = {
 
 -- Panneau des options
 local options_panel = {
-    name    = addonName .. ' v' .. VERSION,
+    name    = ('%s v%s'):format(addonName, VERSION),
     handler = addon,
     type    = 'group',
     childGroups = 'tab',
@@ -411,11 +409,9 @@ end
 --    ShowOptionsPanel() est appelée par ToggleOptionsPanel() et par les commandes slash
 --  ToggleOptionsPanel() est appelée quand on clique sur l'icône LDB
 function addon:BuildOptionsPanel()
-    if VERBOSE then self:Print('BuildOptionsPanel()') end
 
     -- Construit le dialogue si ce n'est pas déjà fait
     if not options_panel.args.database.args[currentRealm] then
-        if VERBOSE then self:Print('-- Ajoute les personnages') end
 
         -- Retrie les royaumes, mais cette fois par ordre alphabétique
         local orderedRealms = CopyTable(sortedRealms)
@@ -426,6 +422,7 @@ function addon:BuildOptionsPanel()
             options_panel.args.database.args[realm] = {
                 name   = realm,
                 type   = 'multiselect',
+                descStyle = 'inline',   -- Pas de tooltip svp :)
                 get    = 'OptionsPanel_IsToonSelected',
                 set    = 'OptionsPanel_SetToonSelected',
                 values = {},
@@ -440,7 +437,6 @@ function addon:BuildOptionsPanel()
 end
 
 function addon:ShowOptionsPanel(msg)
-    if VERBOSE then self:Print('ShowOptionsPanel()') end
 
     -- Sauf si en combat ou si le menu ou les options standard sont affichés
     if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame:IsShown() then return end
@@ -450,7 +446,6 @@ function addon:ShowOptionsPanel(msg)
 end
 
 function addon:ToggleOptionsPanel()
-    if VERBOSE then self:Print('ToggleOptionsPanel()') end
 
     -- Masque le tooltip
     self:HideMainTooltip()
@@ -622,7 +617,7 @@ function addon:UpdateMainTooltip()
     end)
 
     -- Ajoute tous les personnages, royaume par royaume
-    local chars, totalMoney = self.sv.char, 0
+    local totalMoney = 0
     for _,realm in ipairs(sortedRealms) do
         local unfolded, realmMoney = unfoldedRealms[realm], realmsWealths[realm]
 
@@ -640,6 +635,8 @@ function addon:UpdateMainTooltip()
 
         -- 2/ Tous les personnages de ce royaume
         if unfolded then
+            local chars = self.sv.char
+
             -- Trie les personnages du royaume par ordre décroissant de richesse
             -- (fait ici car l'ordre peut changer à tout moment selon le perso courant)
             table.sort(sortedChars[realm], function(n1, n2)
@@ -708,7 +705,6 @@ end
 -- Gestion des statistiques globales
 -------------------------------------------------------------------------------
 function addon:AuditRealms()
-    if VERBOSE then self:Print('AuditRealms()') end
 
     ---------------------------------------------------------------------------
     -- Recense tous les personnages de tous les royaumes et compte la richesse globale de chaque royaume.
@@ -733,7 +729,6 @@ end
 
 -------------------------------------------------------------------------------
 function addon:CheckStatsResets()
-    if VERBOSE then self:Print('CheckStatsResets()') end
 
     local now = date('*t')
 
@@ -805,24 +800,17 @@ function addon:CheckStatsResets()
     ---------------------------------------------------------------------------
     -- 4/ Relance le chronomètre jusqu'à demain minuit pour la prochaine vérification
     ---------------------------------------------------------------------------
-    if VERBOSE then
-        now.min  = now.min + 1
-        now.sec  = 0
-    else
-        now.day  = now.day + 1	-- Demain
-        now.hour = 0			-- à 0 heure
-        now.min  = 0			-- 0 minute
-        now.sec  = 1			-- et 1 seconde (marge de sécurité)
-    end
-    local resetTimer = self:ScheduleTimer('CheckStatsResets', difftime(time(now), time()))
-    if VERBOSE then self:Printf('Prochain reset dans %s', SecondsToTime(self:TimeLeft(resetTimer))) end
+    now.day  = now.day + 1	-- Demain
+    now.hour = 0			-- à 0 heure
+    now.min  = 0			-- 0 minute
+    now.sec  = 1			-- et 1 seconde (marge de sécurité)
+    self:ScheduleTimer('CheckStatsResets', difftime(time(now), time()))
 end
 
 -------------------------------------------------------------------------------
 -- Gestion des stats du personnage courant
 -------------------------------------------------------------------------------
 function addon:PLAYER_MONEY(evt)
-    if VERBOSE then self:Print(evt) end
 
     -- Calcule le gain/la perte d'or
     local diff = GetMoney() - self.db.char.money
@@ -844,28 +832,25 @@ end
 -- Initialisation
 -------------------------------------------------------------------------------
 function addon:DeferredStart()
-    if VERBOSE then self:Print('DeferredStart()') end
 
     -- Vérifie les stats et lance le timer jusqu'à minuit
     self:CheckStatsResets()
 
     -- Sauve le montant d'or actuel
     self.db.char.money = GetMoney()
-    self:PLAYER_MONEY('FAKE_PLAYER_MONEY')
+    self:PLAYER_MONEY()
 
     -- Ecoute les événements
     self:RegisterEvent('PLAYER_MONEY')
 end
 
 function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
-    if VERBOSE then self:Print(evt, isLogin, isReload) end
 
     -- Plus besoin de ça
     self:UnregisterEvent(evt)
 
     -- Initialise la stat de session si ce n'est pas un reload
     if isLogin == true and isReload == false then
-        if VERBOSE then self:Print('-- Nouvelle session (login)') end
         self.db.char.session = 0
     end
 
@@ -879,11 +864,10 @@ end
 
 -------------------------------------------------------------------------------
 function addon:OnInitialize()
-    if VERBOSE then self:Print('OnInitialize()') end
 
     -- Initialise AceDB et garde une référence directe sur les données sauvegardées
     self.db   = LibStub('AceDB-3.0'):New('Broker_CashDB', sv_defaults, true)
-    self.sv   = _G.Broker_CashDB    -- idem rawget(self.db, 'sv')
+    self.sv   = _G.Broker_CashDB    -- ou rawget(self.db, 'sv')
     self.opts = self.db.global
 
     -- Conversion des options v1.3.3 => v1.4.0
@@ -929,27 +913,4 @@ function addon:OnInitialize()
 
     -- Diffère la fin de l'initialisation à PLAYER_ENTERING_WORLD
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
-
-    ---------------------------------------------------------------------------
-    -- Version beta : Backupe les SV par sécurité
-    -- TODO: à virer
-    ---------------------------------------------------------------------------
-    if BETA then
-        self:Print(COLOR_YELLOW:WrapTextInColorCode(VERSION))
-
-        self:RegisterChatCommand('cashback', function()
-            _G.Broker_CashDB_Backup = {
-                ['date'] = date(),
-                ['DB'] = CopyTable(_G.Broker_CashDB)
-            }
-            addon:Print(COLOR_YELLOW:WrapTextInColorCode('SV saved, use /cashrestore to restore'))
-        end)
-        self:RegisterChatCommand('cashrestore', function()
-            if not _G.Broker_CashDB_Backup or not _G.Broker_CashDB_Backup['DB'] then return end
-            addon:Printf('SV was last saved on %s', _G.Broker_CashDB_Backup['date'])
-            -- TODO
-        end)
-
-        if not _G.Broker_CashDB_Backup then _G.SlashCmdList['ACECONSOLE_CASHBACK']() end
-    end
 end

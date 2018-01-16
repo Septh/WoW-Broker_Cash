@@ -1,7 +1,7 @@
 ## Change Log
 
-* Version 2.0.0-beta - 2017/12/??
-	* New: Refactored the code to use a more effecient, timer-based strategy to reset the stats at the correct periods boundaries
+* Version 2.0.0-beta
+	* New: Refactored the code to use a more efficient, timer-based strategy to reset the stats at the correct periods boundaries
 	* New: The **Session** stat is now preserved after a UI Reload
 	* Several micro-optimizations
 * Version 1.4.4 - 2017/12/17

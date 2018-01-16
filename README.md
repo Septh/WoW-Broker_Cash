@@ -21,7 +21,7 @@ Currently available in English (default), French and German. **If you can help t
 
 Obviously, the **Session** stat is maintained for the currently connected character only. All other stats are maintained for all your characters, account wide.
 
-The **Daily**, **Weekly**, **Monthly** and **Yearly** stats are automatically reset at the beginning of the corresponding period. You may also reset any character's stats at any time using the `/brokercash` command - see below.
+The **Daily**, **Weekly**, **Monthly** and **Yearly** stats are automatically reset at the beginning of the corresponding period as described above. You may also reset any character's stats at any time using the `/brokercash` command - see below.
 
 The **Ever** stat is a little special:
 
@@ -38,7 +38,7 @@ Starting with 1.3.0, **Broker: Cash** has a few options for you to play with. Yo
 
 - Prevent the dropdown menu to appear while in combat, should your LDB display addon not provide this feature itself.
 - Hide the copper and silver amounts in either or both the LDB display and the dropdown menu.
-- Disable the secondary tooltip if you don't need it. 
+- Disable the secondary tooltip if you don't need it.
 
 Click the **Broker: Cash** LDB icon or type `/brokercash` (or simply `/bcash`) in your chat window to access the options panel.
 

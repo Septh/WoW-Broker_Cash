@@ -1,10 +1,10 @@
 ## Interface: 70300
 ## Title: Broker_Cash
-## Notes: Keeping track of your gold incomes and outcomes, globally
-## Version: 2.0.0-beta
+## Notes: Keep track of your gold balance, globally
+## Version: 2.0.0
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
-## SavedVariables: Broker_CashDB, Broker_CashDB_Backup
+## SavedVariables: Broker_CashDB
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua

@@ -1,7 +1,12 @@
 ## Change Log
 
-* Version 2.0.0-beta
-	* New: Refactored the code to use a more efficient, timer-based strategy to reset the stats at the correct periods boundaries
+* Version 2.0.2 - 2018/07/19
+	* Updated libs, now using Ace3 r1182
+	* Toc update for WoW 8.0
+* Version 2.0.1 - 2018/03/30
+	* New: Properly accounts for money gained outside of the game, ie. via the Battle.net mobile app
+* Version 2.0.0 - 2018/01/20
+	* New: Refactored the code to use a more efficient, timer-based strategy to reset the statistics
 	* New: The **Session** stat is now preserved after a UI Reload
 	* Several micro-optimizations
 * Version 1.4.4 - 2017/12/17

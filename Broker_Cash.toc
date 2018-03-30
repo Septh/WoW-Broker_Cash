@@ -1,7 +1,7 @@
 ## Interface: 70300
 ## Title: Broker_Cash
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.0.0
+## Version: 2.0.1
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

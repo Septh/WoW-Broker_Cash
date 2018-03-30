@@ -1,4 +1,4 @@
--- Broker: Cash v2.0.0
+-- Broker: Cash v2.0.1
 -- By Septh, BSD licenced
 --
 -- GLOBALS: LibStub, Broker_CashDB
@@ -822,7 +822,7 @@ function addon:PLAYER_MONEY(evt)
     self.db.char.lastSaved = time()
 
     -- Met à jour la richesse du royaume
-    realmsWealths[currentRealm] = realmsWealths[currentRealm]
+    realmsWealths[currentRealm] = (realmsWealths[currentRealm] or 0) + diff
 
     -- Met à jour le texte du LDB
     self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
@@ -833,17 +833,23 @@ end
 -------------------------------------------------------------------------------
 function addon:DeferredStart()
 
-    -- Vérifie les stats et lance le timer jusqu'à minuit
+    -- Vérifie si les stats doivent être réinitialisées et lance le timer jusqu'à minuit
     self:CheckStatsResets()
 
+    -- Est-ce la première connexion avec ce perso ?
+    if self.db.char.since == 0 then
+        self.db.char.since = time()
+        self.db.char.money = GetMoney()
+    end
+
     -- Sauve le montant d'or actuel
-    self.db.char.money = GetMoney()
     self:PLAYER_MONEY()
 
     -- Ecoute les événements
     self:RegisterEvent('PLAYER_MONEY')
 end
 
+-------------------------------------------------------------------------------
 function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
 
     -- Plus besoin de ça
@@ -880,11 +886,6 @@ function addon:OnInitialize()
         self.opts.menu.showSilverAndCopper = false
         self.opts.menu.showSilver = nil
         self.opts.menu.showCopper = nil
-    end
-
-    -- Première connexion avec ce perso ?
-    if self.db.char.since == 0 then
-        self.db.char.since = time()
     end
 
     -- v1.4.0: Ajoute le champ 'ever' si le personnage de l'a pas

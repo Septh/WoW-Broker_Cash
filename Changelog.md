@@ -1,8 +1,11 @@
 ## Change Log
 
+<<<<<<< HEAD
 * Version 2.0.2 - 2018/07/19
 	* Updated libs, now using Ace3 r1182
 	* Toc update for WoW 8.0
+=======
+>>>>>>> 45de6ba5a6af4f3b423d03aa26d1c4fe9f6d0381
 * Version 2.0.1 - 2018/03/30
 	* New: Properly accounts for money gained outside of the game, ie. via the Battle.net mobile app
 * Version 2.0.0 - 2018/01/20

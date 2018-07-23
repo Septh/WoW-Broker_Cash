@@ -3,13 +3,8 @@
 		"path": "$ROOTPATH$\\Broker_Cash.lua",
 		"bookmarks": [
 			{
-				"line": 702,
-				"column": 1,
-				"label": ""
-			},
-			{
-				"line": 726,
-				"column": 1,
+				"line": 707,
+				"column": 8,
 				"label": ""
 			}
 		]

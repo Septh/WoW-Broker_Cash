@@ -226,7 +226,6 @@ local unfoldedRealms = {}
 local highlightTexture = UIParent:CreateTexture(nil, 'OVERLAY')
 highlightTexture:SetTexture('Interface\\QuestFrame\\UI-QuestTitleHighlight')
 highlightTexture:SetBlendMode('ADD')
-highlightTexture:Hide()
 
 -------------------------------------------------------------------------------
 -- Fonctions utilitaires
@@ -681,6 +680,7 @@ function addon:ShowMainTooltip(LDBFrame)
 
         -- Surligne l'icône LDB, sauf si le display est Bazooka (il le fait déjà)
         if not (LDBFrame:GetName() or ''):find('Bazooka', 1) then
+            highlightTexture:SetParent(LDBFrame)
             highlightTexture:SetAllPoints(LDBFrame)
             highlightTexture:Show()
         end
@@ -698,6 +698,7 @@ function addon:HideMainTooltip()
     end
 
     -- Cache le surlignage
+    highlightTexture:SetParent(UIParent)
     highlightTexture:Hide()
 end
 
@@ -833,14 +834,18 @@ end
 -------------------------------------------------------------------------------
 function addon:DeferredStart()
 
-    -- Vérifie si les stats doivent être réinitialisées et lance le timer jusqu'à minuit
-    self:CheckStatsResets()
-
     -- Est-ce la première connexion avec ce perso ?
     if self.db.char.since == 0 then
         self.db.char.since = time()
         self.db.char.money = GetMoney()
+
+        -- Rend aussi l'info dispo pour :AuditRealms()
+        self.sv.char[currentCharKey].since = self.db.char.since
+        self.sv.char[currentCharKey].money = self.db.char.money
     end
+
+    -- Vérifie si les stats doivent être réinitialisées et lance le timer jusqu'à minuit
+    self:CheckStatsResets()
 
     -- Sauve le montant d'or actuel
     self:PLAYER_MONEY()

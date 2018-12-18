@@ -1,5 +1,7 @@
 ## Change Log
 
+* Version 2.0.4 - 2018/12/18
+	* Simple Toc update for 8.1
 * Version 2.0.3 - 2018/07/23
 	* Now correctly calculate realm weath when auditing a character for the first time
 * Version 2.0.2 - 2018/07/19

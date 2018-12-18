@@ -1,4 +1,4 @@
--- Broker: Cash v2.0.2
+-- Broker: Cash v2.0.4
 -- By Septh, BSD licenced
 --
 -- GLOBALS: LibStub, Broker_CashDB

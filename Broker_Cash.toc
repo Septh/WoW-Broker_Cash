@@ -1,11 +1,12 @@
-## Interface: 80000
+## Interface: 80100
 ## Title: Broker_Cash
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.0.3
+## Version: 2.0.4
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB
 
+# Libraries
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml

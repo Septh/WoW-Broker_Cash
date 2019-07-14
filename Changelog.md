@@ -1,5 +1,8 @@
 ## Change Log
 
+* Version 2.0.5 - 2018/12/18
+	* Made frFr locale correctly display large number.
+	* Toc update for 8.2
 * Version 2.0.4 - 2018/12/18
 	* Simple Toc update for 8.1
 * Version 2.0.3 - 2018/07/23

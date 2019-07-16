@@ -244,6 +244,14 @@ local function InvertCharKey(charKey)
 end
 
 -------------------------------------------------------------------------------
+if (GetLocale() == 'frFR') then
+    -- Fixe un bug dans le GlobalStrings.lua français
+    BreakUpLargeNumbers = function(amount)
+        local left, num, right = string.match(amount,'^([^%d]*%d)(%d*)(.-)$')
+        return left .. (num:reverse():gsub('(%d%d%d)','%1 '):reverse()) .. right
+    end
+end
+
 local function GetAbsoluteMoneyString(amount, showSilverAndCopper)
     amount = amount or 0
 

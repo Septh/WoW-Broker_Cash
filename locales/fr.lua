@@ -5,10 +5,6 @@ local addonName, addonTable = ...
 local L = LibStub('AceLocale-3.0'):NewLocale(addonName, 'frFR')
 if not L then return end
 
--- Fixe un bug dans le GlobalStrings.lua français
-DECIMAL_SEPERATOR = ","
-LARGE_NUMBER_SEPERATOR = " "
-
 -- Tooltip principal
 L['Name'] = 'Nom'
 L['Cash'] = 'Solde'

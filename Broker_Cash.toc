@@ -1,7 +1,7 @@
 ## Interface: 80200
 ## Title: Broker_Cash
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.0.6
+## Version: 2.1.0
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

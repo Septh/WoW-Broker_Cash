@@ -1,12 +1,16 @@
 # Broker: Cash
 **The ecstasy of gold.**
 
+## WoW Classic Support
+**Broker: Cash - Classic Edition** is available separately at https://www.curseforge.com/wow/addons/broker-cash-classic
+
+
 ## Purpose
 **Broker: Cash** is a LibDataBroker (LDB) plugin that remembers all your characters gold balance across realms, along with daily, weekly, monthly and yearly variations.
 
-This addon *requires* a LDB display such as [ChocolateBar](https://mods.curse.com/addons/wow/chocolatebar) (my favorite) or [Bazooka](https://mods.curse.com/addons/wow/bazooka) or whichever you prefer.
+This addon *requires* a LDB display such as [ChocolateBar](https://www.curseforge.com/wow/addons/chocolatebar) (my favorite), [Bazooka](https://www.curseforge.com/wow/addons/bazooka), [Titan Panel](https://www.curseforge.com/wow/addons/titan-panel) or whichever you prefer.
 
-Currently available in English (default), French and German. **If you can help translating Broker: Cash to your language, please head up to GitHub and sumit a PR.**
+Currently available in English (default), French and German. **If you can help translating Broker: Cash to your language, please head up to GitHub and sumit a PR, or PM me on Curseforge.**
 
 
 ## Details
@@ -19,7 +23,7 @@ Currently available in English (default), French and German. **If you can help t
 * **Yearly**: variation since January, 1st of the current year at midnight
 * **Ever**: variation since **Broker: Cash** was installed (well, kind of - see below).
 
-Obviously, the **Session** stat is maintained for the currently connected character only. All other stats are maintained for all your characters, account wide.
+Obviously, the **Session** stat is maintained for the currently connected character only (of course, all other stats are maintained for all your characters, account wide). This stat is *not* reset by a simple reload of the UI and since **Broker: Cash 2.1.0**, a new option called **Session threshold** allows you to set the delay before a logout is considered the end of the session. This is useful when you want to briefly connect another toon then continue playing with the current one. The default threshold is set to 60 seconds (1 minute).
 
 The **Daily**, **Weekly**, **Monthly** and **Yearly** stats are automatically reset at the beginning of the corresponding period as described above. You may also reset any character's stats at any time using the `/brokercash` command - see below.
 

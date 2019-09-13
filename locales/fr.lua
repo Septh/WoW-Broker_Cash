@@ -24,9 +24,15 @@ L['Ever'] = 'En tout'
 
 -- Panneau de configuration
 L['Options'] = true
+
+L['OPTIONS_GENERAL'] = 'Général'
+L['OPTS_SESSION_THRESHOLD'] = 'Durée inter-session'
+L['OPTS_SESSION_THRESHOLD_DESC'] = "Si vous reconnectez un personnage avant que ce nombre de secondes ne soit écoulé, la stat \"session\" ne sera pas réinitialisée. Reportez-vous à la documentation pour plus d'information."
+
 L['OPTIONS_LDB'] = 'Icône LDB'
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
+
 L['OPTIONS_MENU'] = 'Menu déroulant'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = "Evite de vous perturber pendant le combat..."

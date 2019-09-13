@@ -1,5 +1,8 @@
 ## Change Log
 
+* Version 2.1.0 - 2019/09/13
+	* Added the "Session Threshold" option.
+	* Updated Ace3 to r1227.
 * Version 2.0.6 - 2019/07/16
 	* Made frFr locale correctly display large number... without taint. Sigh.
 * Version 2.0.5 - 2019/07/14
@@ -8,7 +11,7 @@
 * Version 2.0.4 - 2018/12/18
 	* Simple Toc update for 8.1
 * Version 2.0.3 - 2018/07/23
-	* Now correctly calculate realm weath when auditing a character for the first time
+	* Now correctly calculates realm wealth when auditing a character for the first time.
 * Version 2.0.2 - 2018/07/19
 	* Toc update for WoW 8.0
 	* Updated libs, now using Ace3 r1182

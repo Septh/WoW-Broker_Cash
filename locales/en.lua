@@ -24,9 +24,15 @@ L['Ever'] = true
 
 -- Options panel
 L['Options'] = true
+
+L['OPTIONS_GENERAL'] = 'General'
+L['OPTS_SESSION_THRESHOLD'] = 'Session threshold'
+L['OPTS_SESSION_THRESHOLD_DESC'] = 'If you log out then back in with the same character before this number of seconds has ellapsed, then the "session" stat will not be reset. See docs for more info.'
+
 L['OPTIONS_LDB'] = 'LDB Display'
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
+
 L['OPTIONS_MENU'] = 'Dropdown Menu'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Disable in combat'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Prevents the menu to show while in combat.'

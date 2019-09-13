@@ -44,8 +44,13 @@ local currentCharKey = currentChar .. ' - ' .. currentRealm
 local sortedRealms, sortedChars, realmsWealths = {}, {}, {}
 
 -- Données sauvegardées
+local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD = 0, 60
+
 local sv_defaults = {
     global = {
+        general = {
+            sessionThreshold = MAX_SESSION_THRESHOLD,
+        },
         ldb = {
             showSilverAndCopper = true,
         },
@@ -56,15 +61,16 @@ local sv_defaults = {
         }
     },
     char = {
-        since     = 0,
-        lastSaved = 0,
-        money     = 0,
-        session   = 0,  -- v2.0.0
-        day       = 0,
-        week      = 0,
-        month     = 0,
-        year      = 0,
-        ever      = 0   -- v1.4.0
+        since      = 0,
+        lastSaved  = 0,
+        money      = 0,
+        session    = 0,  -- v2.0.0
+        lastLogout = 0,  -- v2.1.0
+        day        = 0,
+        week       = 0,
+        month      = 0,
+        year       = 0,
+        ever       = 0   -- v1.4.0
     }
 }
 
@@ -82,19 +88,43 @@ local options_panel = {
             get   = 'OptionsPanel_GetOpt',
             set   = 'OptionsPanel_SetOpt',
             args  = {
-                ldb = {
-                    name   = L['OPTIONS_LDB'],
+                general = {
+                    name   = L['OPTIONS_GENERAL'],
                     type   = 'group',
                     inline = true,
                     order  = 10,
                     args   = {
+                        sessionThreshold = {
+                            name    = L['OPTS_SESSION_THRESHOLD'],
+                            order   = 1,
+                            width   = 'full',
+                            type    = 'range',
+                            min     = MIN_SESSION_THRESHOLD,
+                            max     = MAX_SESSION_THRESHOLD,
+                            step    = 1,
+                            bigStep = 10
+                        },
+                        sessionThresholdDesc = {
+                            name     = '\n' .. L['OPTS_SESSION_THRESHOLD_DESC'],
+                            order    = 2,
+                            type     = 'description',
+                            fontSize = 'small',
+                        }
+                    },
+                },
+                ldb = {
+                    name   = L['OPTIONS_LDB'],
+                    type   = 'group',
+                    inline = true,
+                    order  = 20,
+                    args   = {
                         showSilverAndCopper = {
-                            name  = L['OPTS_SMALL_PARTS'],
-                            desc  = L['OPTS_SMALL_PARTS_DESC'],
+                            name      = L['OPTS_SMALL_PARTS'],
+                            desc      = L['OPTS_SMALL_PARTS_DESC'],
                             descStyle = 'inline',
-                            type  = 'toggle',
-                            width = 'full',
-                            order = 2,
+                            type      = 'toggle',
+                            width     = 'full',
+                            order     = 2,
                         },
                     },
                 },
@@ -102,7 +132,7 @@ local options_panel = {
                     name   = L['OPTIONS_MENU'],
                     type   = 'group',
                     inline = true,
-                    order  = 20,
+                    order  = 30,
                     args   = {
                         disableInCombat = {
                             name      = L['OPTS_DISABLE_IN_COMBAT'],
@@ -380,6 +410,7 @@ end
 function addon:OptionsPanel_IsToonSelected(info, opt)
     return selectedToons[MakeCharKey(opt, info[#info])]
 end
+
 function addon:OptionsPanel_SetToonSelected(info, opt, value)
     local key = MakeCharKey(opt, info[#info])
     if value then
@@ -401,6 +432,7 @@ end
 function addon:OptionsPanel_GetOpt(info)
     return self.opts[info[#info-1]][info[#info]]
 end
+
 function addon:OptionsPanel_SetOpt(info, value)
     -- info[#info - 1] = 'menu' ou 'ldb', info[#info] = l'option cliquée
     self.opts[info[#info-1]][info[#info]] = value
@@ -570,6 +602,7 @@ end
 local function MainTooltip_OnEnterRealm(realmLineFrame, realm)
     addon:ShowRealmTooltip(realmLineFrame, realm)
 end
+
 local function MainTooltip_OnLeaveRealm(realmLineFrame)
     addon:HideSubTooltip()
 end
@@ -578,6 +611,7 @@ end
 local function MainTooltip_OnEnterChar(charLineFrame, charKey)
     addon:ShowCharTooltip(charLineFrame, charKey)
 end
+
 local function MainTooltip_OnLeaveChar(charLineFrame)
     addon:HideSubTooltip()
 end
@@ -870,7 +904,9 @@ function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
 
     -- Initialise la stat de session si ce n'est pas un reload
     if isLogin == true and isReload == false then
-        self.db.char.session = 0
+        if (time() - self.db.char.lastLogout) > self.db.global.general.sessionThreshold then
+            self.db.char.session = 0
+        end
     end
 
     -- Minimise les imprécisions dues aux millisecondes
@@ -879,6 +915,11 @@ function addon:PLAYER_ENTERING_WORLD(evt, isLogin, isReload)
     local now = date('*t')
     now.sec = now.sec + 1
     self:ScheduleTimer('DeferredStart', difftime(time(now), time()))
+end
+
+-------------------------------------------------------------------------------
+function addon:PLAYER_LOGOUT()
+    self.db.char.lastLogout = time()
 end
 
 -------------------------------------------------------------------------------
@@ -927,4 +968,5 @@ function addon:OnInitialize()
 
     -- Diffère la fin de l'initialisation à PLAYER_ENTERING_WORLD
     self:RegisterEvent('PLAYER_ENTERING_WORLD')
+    self:RegisterEvent('PLAYER_LOGOUT')
 end

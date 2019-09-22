@@ -1,4 +1,4 @@
--- Broker: Cash v2.0.5
+-- Broker: Cash v2.1.1
 -- By Septh, BSD licenced
 --
 -- GLOBALS: LibStub, Broker_CashDB
@@ -44,12 +44,12 @@ local currentCharKey = currentChar .. ' - ' .. currentRealm
 local sortedRealms, sortedChars, realmsWealths = {}, {}, {}
 
 -- Données sauvegardées
-local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD = 0, 60
+local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD = 0, 300
 
 local sv_defaults = {
     global = {
         general = {
-            sessionThreshold = MAX_SESSION_THRESHOLD,
+            sessionThreshold = 60,
         },
         ldb = {
             showSilverAndCopper = true,

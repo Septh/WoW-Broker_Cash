@@ -1,5 +1,3 @@
--- Broker: Cash v2.1.1
--- By Septh, BSD licenced
 --
 -- GLOBALS: LibStub, Broker_CashDB
 
@@ -36,6 +34,7 @@ local COLOR_YELLOW = CreateColor(0.8, 0.8, 0.1, 1)
 
 -- Gestion des statistiques
 local FIRST_DAY_OF_WEEK = 2	-- Lundi
+local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD, DEF_SESSION_THRESHOLD = 0, 300, 60  -- En secondes
 
 -- Données des personnages
 local currentChar    = UnitName('player')
@@ -44,12 +43,10 @@ local currentCharKey = currentChar .. ' - ' .. currentRealm
 local sortedRealms, sortedChars, realmsWealths = {}, {}, {}
 
 -- Données sauvegardées
-local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD = 0, 300
-
 local sv_defaults = {
     global = {
         general = {
-            sessionThreshold = 60,
+            sessionThreshold = DEF_SESSION_THRESHOLD,
         },
         ldb = {
             showSilverAndCopper = true,
@@ -942,7 +939,7 @@ function addon:OnInitialize()
         self.opts.menu.showCopper = nil
     end
 
-    -- v1.4.0: Ajoute le champ 'ever' si le personnage de l'a pas
+    -- v1.4.0: Ajoute le champ 'ever' si le personnage ne l'a pas
     if self.db.char.ever == 0 then
         self.db.char.ever = self.db.char.year
     end

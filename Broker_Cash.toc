@@ -1,7 +1,14 @@
-## Interface: 80200
+#@retail@
+## Interface: 80205
 ## Title: Broker_Cash
+#@end-retail@
+#@non-retail@
+# ## Interface: 11302
+# ## Title: Broker_Cash - Classic Edition
+#@end-non-retail@
+
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.1.1
+## Version: 2.1.2
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

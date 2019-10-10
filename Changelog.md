@@ -1,5 +1,10 @@
 ## Change Log
 
+* Version 2.1.3 - 2019/10/10
+	* Added manual-changelog to .pkgmeta so Twitch client doesn't get confused with 2 Changelog.md files in the archive.
+* Version 2.1.2 - 2019/10/08
+	* Enabled automated packaging via Travis CI
+* Version 2.1.1 - Not released
 * Version 2.1.0 - 2019/09/13
 	* Added the "Session Threshold" option.
 	* Updated Ace3 to r1227.

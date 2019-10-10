@@ -1,5 +1,7 @@
 ## Change Log
 
+* Version 2.1.4 - 2019/10/10
+	* Update LibQTip to r188
 * Version 2.1.3 - 2019/10/10
 	* Added manual-changelog to .pkgmeta so Twitch client doesn't get confused with 2 Changelog.md files in the archive.
 * Version 2.1.2 - 2019/10/08

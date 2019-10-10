@@ -8,7 +8,7 @@
 #@end-non-retail@
 
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.1.3
+## Version: 2.1.4
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

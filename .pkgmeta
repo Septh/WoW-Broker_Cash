@@ -1,1 +1,3 @@
 package-as: Broker_Cash
+
+manual-changelog: Changelog.md

@@ -1,5 +1,5 @@
 #@retail@
-## Interface: 80205
+## Interface: 90000
 ## Title: Broker_Cash
 #@end-retail@
 #@non-retail@
@@ -8,7 +8,7 @@
 #@end-non-retail@
 
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.1.4
+## Version: 2.1.5
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

@@ -1,14 +1,16 @@
 #@retail@
 ## Interface: 90001
 ## Title: Broker_Cash
+## X-Curse-Project-ID: 102836
 #@end-retail@
 #@non-retail@
 # ## Interface: 11305
 # ## Title: Broker_Cash - Classic Edition
+# ## X-Curse-Project-ID: 340248
 #@end-non-retail@
 
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.1.5
+## Version: 2.1.6
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

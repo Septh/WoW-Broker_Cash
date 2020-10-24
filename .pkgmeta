@@ -1,3 +1,10 @@
 package-as: Broker_Cash
 
-manual-changelog: Changelog.md
+manual-changelog:
+  filename: Changelog.md
+  markup-type: markdown
+
+embedded-libraries:
+  - Ace3
+  - LibQTip-1.0
+  - LibDataBroker-1.1

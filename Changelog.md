@@ -1,5 +1,8 @@
 ## Change Log
 
+* Version 2.1.6 - 2020/10/24
+	* xxx
+	* xxx
 * Version 2.1.5 - 2020/10/17
 	* Update LibQTip to latest alpha (for pre-patch 9.0.1 frame backdrop compatibility).
 	* Update Ace3 to r1241.

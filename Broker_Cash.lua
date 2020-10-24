@@ -1,6 +1,12 @@
 --
 -- GLOBALS: LibStub, Broker_CashDB
 
+-- Environnement
+local addonName, addonSpace = ...
+local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
+local VERSION = GetAddOnMetadata(addonName, 'Version')
+
 -- API
 local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
 local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
@@ -8,12 +14,6 @@ local CreateColor, CopyTable, tDeleteItem, SecondsToTime = CreateColor, CopyTabl
 local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall
 local GameMenuFrame, InterfaceOptionsFrame = GameMenuFrame, InterfaceOptionsFrame
 local SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER = SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER
-
--- Environnement
-local addonName, addonSpace = ...
-local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
-local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
-local VERSION = GetAddOnMetadata(addonName, 'Version')
 
 -- Bibliothèques
 local libLDB  = LibStub('LibDataBroker-1.1')

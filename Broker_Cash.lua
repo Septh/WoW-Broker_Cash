@@ -50,6 +50,7 @@ local sv_defaults = {
         },
         ldb = {
             showSilverAndCopper = true,
+            highlight           = false,  -- v2.1.6
         },
         menu = {
             disableInCombat     = true,
@@ -115,6 +116,14 @@ local options_panel = {
                     inline = true,
                     order  = 20,
                     args   = {
+                        highlight = {
+                            name      = L['OPTS_HIGHLIGHT_LDB'],
+                            desc      = L['OPTS_HIGHLIGHT_LDB_DESC'],
+                            descStyle = 'inline',
+                            type      = 'toggle',
+                            width     = 'full',
+                            order     = 1
+                        },
                         showSilverAndCopper = {
                             name      = L['OPTS_SMALL_PARTS'],
                             desc      = L['OPTS_SMALL_PARTS_DESC'],
@@ -433,6 +442,7 @@ end
 function addon:OptionsPanel_SetOpt(info, value)
     -- info[#info - 1] = 'menu' ou 'ldb', info[#info] = l'option cliquée
     self.opts[info[#info-1]][info[#info]] = value
+    self:Print(info[#info-1], info[#info], self.opts[info[#info-1]][info[#info]])
 
     -- Met à jour le texte du LDB le cas échéant
     if info[#info-1] == 'ldb' then
@@ -717,8 +727,8 @@ function addon:ShowMainTooltip(LDBFrame)
         mainTooltip:SmartAnchorTo(LDBFrame)
         mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 
-        -- Surligne l'icône LDB, sauf si le display est Bazooka (il le fait déjà)
-        if not (LDBFrame:GetName() or ''):find('Bazooka', 1) then
+        -- Surligne l'icône LDB
+        if self.opts.ldb.highlight then
             highlightTexture:SetParent(LDBFrame)
             highlightTexture:SetAllPoints(LDBFrame)
             highlightTexture:Show()

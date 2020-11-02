@@ -27,9 +27,11 @@ L['Options'] = true
 
 L['OPTIONS_GENERAL'] = 'Général'
 L['OPTS_SESSION_THRESHOLD'] = 'Durée inter-session'
-L['OPTS_SESSION_THRESHOLD_DESC'] = "Si vous reconnectez un personnage avant que ce nombre de secondes ne soit écoulé, la stat \"session\" ne sera pas réinitialisée. Reportez-vous à la documentation pour plus d'information."
+L['OPTS_SESSION_THRESHOLD_DESC'] = "Si vous déconnectez, puis reconnectez un personnage avant que ce nombre de secondes ne soit écoulé, la stat \"session\" ne sera pas réinitialisée. Reportez-vous à la documentation pour plus d'information."
 
 L['OPTIONS_LDB'] = 'Icône LDB'
+L['OPTS_HIGHLIGHT_LDB'] = "Surligner l'icône au survol"
+L['OPTS_HIGHLIGHT_LDB_DESC'] = "Si votre addon ne le fait pas de lui-même."
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
 

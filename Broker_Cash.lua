@@ -1,11 +1,10 @@
 --
 -- GLOBALS: LibStub, Broker_CashDB
-
--- Environnement
-local addonName, addonSpace = ...
-local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
-local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
-local VERSION = GetAddOnMetadata(addonName, 'Version')
+local _G = _G
+local string, table, math, date, time = string, table, math, date, time
+local pairs, ipairs = pairs, ipairs
+local time, difftime = time, difftime
+local wipe = wipe
 
 -- API
 local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
@@ -14,6 +13,12 @@ local CreateColor, CopyTable, tDeleteItem, SecondsToTime = CreateColor, CopyTabl
 local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall
 local GameMenuFrame, InterfaceOptionsFrame = GameMenuFrame, InterfaceOptionsFrame
 local SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER = SILVER_PER_GOLD, COPPER_PER_GOLD, COPPER_PER_SILVER
+
+-- Environnement
+local addonName, addonSpace = ...
+local addon   = LibStub('AceAddon-3.0'):NewAddon(addonSpace, addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+local L       = LibStub('AceLocale-3.0'):GetLocale(addonName)
+local VERSION = GetAddOnMetadata(addonName, 'Version')
 
 -- Bibliothèques
 local libLDB  = LibStub('LibDataBroker-1.1')
@@ -34,7 +39,7 @@ local COLOR_YELLOW = CreateColor(0.8, 0.8, 0.1, 1)
 
 -- Gestion des statistiques
 local FIRST_DAY_OF_WEEK = 2	-- Lundi
-local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD, DEF_SESSION_THRESHOLD = 0, 300, 60  -- En secondes
+local MIN_SESSION_THRESHOLD, MAX_SESSION_THRESHOLD, DEFAULT_SESSION_THRESHOLD = 0, 300, 60  -- En secondes
 
 -- Données des personnages
 local currentChar    = UnitName('player')
@@ -46,10 +51,11 @@ local sortedRealms, sortedChars, realmsWealths = {}, {}, {}
 local sv_defaults = {
     global = {
         general = {
-            sessionThreshold = DEF_SESSION_THRESHOLD,
+            sessionThreshold = DEFAULT_SESSION_THRESHOLD,
         },
         ldb = {
             showSilverAndCopper = true,
+            highlight           = false,  -- v2.1.6
         },
         menu = {
             disableInCombat     = true,
@@ -115,6 +121,14 @@ local options_panel = {
                     inline = true,
                     order  = 20,
                     args   = {
+                        highlight = {
+                            name      = L['OPTS_HIGHLIGHT_LDB'],
+                            desc      = L['OPTS_HIGHLIGHT_LDB_DESC'],
+                            descStyle = 'inline',
+                            type      = 'toggle',
+                            width     = 'full',
+                            order     = 1
+                        },
                         showSilverAndCopper = {
                             name      = L['OPTS_SMALL_PARTS'],
                             desc      = L['OPTS_SMALL_PARTS_DESC'],
@@ -271,7 +285,7 @@ local function InvertCharKey(charKey)
 end
 
 -------------------------------------------------------------------------------
-if (GetLocale() == 'frFR') then
+if GetLocale() == 'frFR' then
     -- Fixe un bug dans le GlobalStrings.lua français
     BreakUpLargeNumbers = function(amount)
         local left, num, right = string.match(amount,'^([^%d]*%d)(%d*)(.-)$')
@@ -431,7 +445,7 @@ function addon:OptionsPanel_GetOpt(info)
 end
 
 function addon:OptionsPanel_SetOpt(info, value)
-    -- info[#info - 1] = 'menu' ou 'ldb', info[#info] = l'option cliquée
+    -- info[#info-1] = 'menu' ou 'ldb', info[#info] = l'option cliquée
     self.opts[info[#info-1]][info[#info]] = value
 
     -- Met à jour le texte du LDB le cas échéant
@@ -717,8 +731,8 @@ function addon:ShowMainTooltip(LDBFrame)
         mainTooltip:SmartAnchorTo(LDBFrame)
         mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function() addon:HideMainTooltip() end)
 
-        -- Surligne l'icône LDB, sauf si le display est Bazooka (il le fait déjà)
-        if not (LDBFrame:GetName() or ''):find('Bazooka', 1) then
+        -- Surligne l'icône LDB
+        if self.opts.ldb.highlight then
             highlightTexture:SetParent(LDBFrame)
             highlightTexture:SetAllPoints(LDBFrame)
             highlightTexture:Show()
@@ -948,7 +962,7 @@ function addon:OnInitialize()
     self.dataObject = libLDB:NewDataObject(addonName, {
         type    = 'data source',
         icon    = 'Interface\\MINIMAP\\TRACKING\\Banker',
-        text    = GetAbsoluteMoneyString(addon.db.char.money, addon.opts.ldb.showSilverAndCopper),
+        text    = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper),
         OnEnter = function(f) addon:ShowMainTooltip(f) end,
         OnClick = function(f, b) addon:ToggleOptionsPanel() end
     })

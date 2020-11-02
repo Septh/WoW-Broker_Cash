@@ -2,7 +2,7 @@
 **The ecstasy of gold.**
 
 ## WoW Classic Support
-**Broker: Cash** for WoW Retail is available at https://www.curseforge.com/wow/addons/broker-cash-classic  
+**Broker: Cash** for WoW Retail is available at https://www.curseforge.com/wow/addons/broker-cash
 **Broker: Cash - Classic Edition** for WoW Classic is available at https://www.curseforge.com/wow/addons/broker-cash-classic
 
 

@@ -1,10 +1,11 @@
 ## Change Log
 
-* Version 2.1.6 - 2020/10/24
-	* xxx
-	* xxx
+* Version 2.1.6 - 2020/11/03
+	* Added an option to control the highlighting of the main LDB icon (set to false by default).
+	* Update LibQTip to latest release (9.0.1.2) (and still correcting @debug@ comments in the process!)
+	* Fix buggy TOC #Interface field in Classic Edition build.
 * Version 2.1.5 - 2020/10/17
-	* Update LibQTip to latest alpha (for pre-patch 9.0.1 frame backdrop compatibility).
+	* Update LibQTip to latest alpha (for frame backdrop compatibility).
 	* Update Ace3 to r1241.
 * Version 2.1.4 - 2019/10/10
 	* Update LibQTip to r188

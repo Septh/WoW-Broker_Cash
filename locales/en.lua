@@ -30,6 +30,8 @@ L['OPTS_SESSION_THRESHOLD'] = 'Session threshold'
 L['OPTS_SESSION_THRESHOLD_DESC'] = 'If you log out then back in with the same character before this number of seconds has ellapsed, then the "session" stat will not be reset. See docs for more info.'
 
 L['OPTIONS_LDB'] = 'LDB Display'
+L['OPTS_HIGHLIGHT_LDB'] = "Highlight the LDB icon on mouseover."
+L['OPTS_HIGHLIGHT_LDB_DESC'] = "For those LDB displays that don't do it themselves."
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
 

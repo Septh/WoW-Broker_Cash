@@ -1,5 +1,7 @@
 ## Change Log
 
+* Version 2.1.7 - 2020/11/18
+	* TOC update for 9.0.2
 * Version 2.1.6 - 2020/11/03
 	* Added an option to control the highlighting of the main LDB icon (set to false by default).
 	* Update LibQTip to latest release (9.0.1.2) (and still correcting @debug@ comments in the process!)

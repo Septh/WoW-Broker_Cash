@@ -1,5 +1,5 @@
 #@retail@
-## Interface: 90002
+## Interface: 90205
 ## Title: Broker_Cash
 ## X-Curse-Project-ID: 102836
 #@end-retail@
@@ -10,7 +10,7 @@
 #@end-non-retail@
 
 ## Notes: Keep track of your gold balance, globally
-## Version: 2.1.7
+## Version: 2.1.8
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB
@@ -28,7 +28,8 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\AceTimer-3.0\AceTimer-3.0.xml
 
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
-Libs\LibQTip-1.0\LibQTip-1.0.lua
+libs\LibQTip-1.0\LibQTip-1.0.lua
+libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 locales\en.lua
 locales\fr.lua

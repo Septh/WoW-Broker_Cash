@@ -1,9 +1,10 @@
-
 -- Environnement
 -- GLOBALS: LibStub
 local addonName, addonTable = ...
 local L = LibStub('AceLocale-3.0'):NewLocale(addonName, 'enUS', true)
-if not L then return end
+if not L then
+  return
+end
 
 -- Main tooltip
 L['Name'] = true
@@ -34,6 +35,7 @@ L['OPTS_HIGHLIGHT_LDB'] = "Highlight the LDB icon on mouseover."
 L['OPTS_HIGHLIGHT_LDB_DESC'] = "For those LDB displays that don't do it themselves."
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
+L['OPTS_HIDE_MINIMAP_BUTTON'] = 'Hide Minimap Button'
 
 L['OPTIONS_MENU'] = 'Dropdown Menu'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Disable in combat'
@@ -57,3 +59,6 @@ L['RESET_TOONS'] = 'Reset %d toons:'
 L['DELETE_TOON'] = 'Delete this toon:'
 L['DELETE_TOONS'] = 'Delete %d toons:'
 L['Are you sure?'] = true
+
+L['WoW Token'] = true
+L['Guild Bank'] = true

@@ -1,5 +1,16 @@
 ## Change Log
 
+* Version 2.1.8 WIP - 2022/07/30
+	* Updated Ace3 to r1259
+	* Remove unused dependencies
+	* TOC update for 9.2.5
+	* Added minimap button which allow usage without data broker
+	* Added total balance
+	* Changed indent to 2 spaces width
+	* Added WoW Token price (thanks AcademicoMDP)
+	* Added Guild Bank Money (thanks AcademicoMDP, disabled for now)
+	* Added Spanish Locale (thanks osilvay, need review)
+	* More German translations (need review)
 * Version 2.1.7 - 2020/11/18
 	* TOC update for 9.0.2
 * Version 2.1.6 - 2020/11/03

@@ -1,9 +1,10 @@
-
 -- Environnement
 -- GLOBALS: LibStub
 local addonName, addonTable = ...
 local L = LibStub('AceLocale-3.0'):NewLocale(addonName, 'frFR')
-if not L then return end
+if not L then
+  return
+end
 
 -- Tooltip principal
 L['Name'] = 'Nom'
@@ -34,6 +35,7 @@ L['OPTS_HIGHLIGHT_LDB'] = "Surligner l'icône au survol"
 L['OPTS_HIGHLIGHT_LDB_DESC'] = "Si votre addon ne le fait pas de lui-même."
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
+L['OPTS_HIDE_MINIMAP_BUTTON'] = "Masquer l'icône de la minimap"
 
 L['OPTIONS_MENU'] = 'Menu déroulant'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'
@@ -56,4 +58,7 @@ L['RESET_TOON'] = 'Êtes-vous sûr de vouloir\nréitinialiser ce personnage ?'
 L['RESET_TOONS'] = 'Êtes-vous sûr de vouloir\nréinitialiseer ces %d personnages ?'
 L['DELETE_TOON'] = 'Êtes-vous sûr de vouloir\nsupprimer ce personnage ?'
 L['DELETE_TOONS'] = 'Êtes-vous sûr de vouloir\nsupprimer ces %d personnages ?'
-L['Are you sure?'] = '' --Êtes-vous sûr ?'
+L['Are you sure?'] = 'Êtes-vous sûr ?'
+
+L['WoW Token'] = 'Jeton WoW'
+L['Guild Bank'] = 'Banque de guilde'

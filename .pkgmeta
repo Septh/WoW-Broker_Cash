@@ -8,3 +8,4 @@ embedded-libraries:
   - Ace3
   - LibQTip-1.0
   - LibDataBroker-1.1
+  - LibDBIcon-1.0

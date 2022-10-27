@@ -1,5 +1,9 @@
 ## Change Log
 
+* Version 2.1.9 - 2022/10/27
+  * TOC update for 10.0.0
+	* Updated Ace3 to r1294
+	* Fix minimap button click
 * Version 2.1.8 WIP - 2022/07/30
 	* Updated Ace3 to r1259
 	* Remove unused dependencies

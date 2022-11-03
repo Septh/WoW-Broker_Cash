@@ -2,16 +2,16 @@
 **The ecstasy of gold.**
 
 ## WoW Classic Support
-**Broker: Cash** for WoW Retail is available at https://www.curseforge.com/wow/addons/broker-cash
+**Broker: Cash** for WoW Retail is available at https://www.curseforge.com/wow/addons/broker_cash  
 **Broker: Cash - Classic Edition** for WoW Classic is available at https://www.curseforge.com/wow/addons/broker-cash-classic
 
 
 ## Purpose
-**Broker: Cash** is a LibDataBroker (LDB) plugin that remembers all your characters gold balance across realms, along with daily, weekly, monthly and yearly variations.
+**Broker: Cash** is an addon that remembers all your characters gold balance across realms, along with daily, weekly, monthly and yearly variations and displays them in a minimap icon tooltip.
 
-This addon *requires* a LDB display such as [ChocolateBar](https://www.curseforge.com/wow/addons/chocolatebar) (my favorite), [Bazooka](https://www.curseforge.com/wow/addons/bazooka), [Titan Panel](https://www.curseforge.com/wow/addons/titan-panel) or whichever you prefer.
+This addon is also available as a LibDataBroker (LDB) plugin for LDB display such as [ChocolateBar](https://www.curseforge.com/wow/addons/chocolatebar) (my favorite), [Bazooka](https://www.curseforge.com/wow/addons/bazooka), [Titan Panel](https://www.curseforge.com/wow/addons/titan-panel) or whichever you prefer.
 
-Currently available in English (default), French and German. **If you can help translating Broker: Cash to your language, please head up to GitHub and sumit a PR, or PM me on Curseforge.**
+Currently available in English (default), French, Spanish and German. **If you can help translating Broker: Cash to your language, please head up to GitHub and sumit a PR, or PM me on Curseforge.**
 
 
 ## Details
@@ -61,7 +61,7 @@ Broker: Cash is released under the [MIT licence](https://opensource.org/licenses
 
 
 ## Enjoy!
-Also check my other addons: [BagMeters](https://www.curse.com/addons/wow/bagmeters), [BankItems_MailWatch](https://www.curse.com/addons/wow/bankitems_mailwatch) and [2048 for WoW](https://www.curse.com/addons/wow/wow2048).
+Also check my other addons: [BagMeters](https://www.curseforge.com/wow/addons/bagmeters), [BankItems_MailWatch](https://www.curseforge.com/wow/addons/bankitems_mailwatch) and [2048 for WoW](https://www.curseforge.com/wow/addons/wow2048).
 
 If you are an addon developer, also check my [WoW Bundle for vscode](https://marketplace.visualstudio.com/items?itemName=Septh.wow-bundle) extension which brings better Lua language support and WoW API highlighting to Microsoft Visual Studio Code.
 

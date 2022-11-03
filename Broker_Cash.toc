@@ -9,7 +9,10 @@
 # ## X-Curse-Project-ID: 340248
 #@end-non-retail@
 
-## Notes: Keep track of your gold balance, globally
+## Notes: Keep track of your gold balance accross all your characters.
+## Notes-frFR: Suivez le solde de votre or sur l'ensemble de vos personnages.
+## Notes-esES: Controla tu saldo de oro en todos tus personajes.
+## Notes-deDE: Behalten Sie den Überblick über Ihr Goldguthaben für alle Ihre Charaktere.
 ## Version: 2.1.9
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3

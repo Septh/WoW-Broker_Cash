@@ -516,7 +516,7 @@ end
 function addon:ShowOptionsPanel(msg)
 
   -- Sauf si en combat ou si le menu ou les options standard sont affichés
-  if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame:IsShown() then
+  if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
     return
   end
 

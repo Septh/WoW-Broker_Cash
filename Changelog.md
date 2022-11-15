@@ -1,5 +1,8 @@
 ## Change Log
 
+* Version 2.2.0 - 2022/11/15
+  * Update LibQTip to 9.1.5-1-g4c6a3d8 (fix GetBackdrop error, thanks GeoRam2016)
+	* Fix missing locale import (es.lua)
 * Version 2.1.9 - 2022/10/27
   * TOC update for 10.0.0
 	* Updated Ace3 to r1294

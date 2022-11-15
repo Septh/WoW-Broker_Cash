@@ -13,7 +13,7 @@
 ## Notes-frFR: Suivez le solde de votre or sur l'ensemble de vos personnages.
 ## Notes-esES: Controla tu saldo de oro en todos tus personajes.
 ## Notes-deDE: Behalten Sie den Überblick über Ihr Goldguthaben für alle Ihre Charaktere.
-## Version: 2.1.9
+## Version: 2.2.0
 ## Author: Septh
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB
@@ -36,5 +36,6 @@ libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 locales\en.lua
 locales\fr.lua
+locales\es.lua
 locales\de.lua
 Broker_Cash.lua

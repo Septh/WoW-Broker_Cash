@@ -1,9 +1,14 @@
 ## Change Log
 
+- Version 2.2.2 - 2023/05/09
+  - TOC update for 10.1.0
+  - Update LibDBIcon to 10.1.0
+  - Update LibQTip to 10.0.7.1
+  - Add IconTexture to TOC
 - Version 2.2.1 - 2023/01/28
   - TOC update for 10.0.5
   - Update LibDBIcon to 10.0.1
-	- Drop Classic support
+  - Drop Classic support
 - Version 2.2.0 - 2022/11/15
   - Update LibQTip to 9.1.5-1-g4c6a3d8 (fix GetBackdrop error, thanks GeoRam2016)
   - Fix missing locale import (es.lua)

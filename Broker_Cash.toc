@@ -1,10 +1,11 @@
 ## Title: Broker_Cash
 ## Author: Septh
-## Version: 2.2.1
-## Interface: 100005
+## Version: 2.2.2
+## Interface: 100100
 ## X-Curse-Project-ID: 102836
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB
+## IconTexture: Interface\AddOns\Broker_Cash\Broker_Cash
 
 ## Notes: Keep track of your gold balance accross all your characters.
 ## Notes-frFR: Suivez le solde de votre or sur l'ensemble de vos personnages.

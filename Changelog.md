@@ -1,5 +1,9 @@
 ## Change Log
 
+- Version 2.2.3 - 2023/11/11
+  - TOC update for 10.2.0
+  - Update Ace3 to r1309
+  - Update LibDBIcon to 10.1.6
 - Version 2.2.2 - 2023/05/09
   - TOC update for 10.1.0
   - Update LibDBIcon to 10.1.0

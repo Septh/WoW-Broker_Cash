@@ -1,5 +1,10 @@
 ## Change Log
-
+- Version 2.2.4 - 2024/06/27
+  - TOC update for 11.0.0
+  - Update Ace3 to r1341
+  - Add faction icon
+  - Colorise character name with class color
+  - Show current character session balance as LDB text
 - Version 2.2.3 - 2023/11/11
   - TOC update for 10.2.0
   - Update Ace3 to r1309

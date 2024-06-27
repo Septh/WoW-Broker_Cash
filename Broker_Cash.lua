@@ -33,6 +33,10 @@ local COPPER_ICON_STRING = ('|TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:2:0|t'
 local PLUS_BUTTON_STRING = ('|TInterface\\Buttons\\UI-PlusButton-Up:%d:%d:2:0|t'):format(tth, tth)
 local MINUS_BUTTON_STRING = ('|TInterface\\Buttons\\UI-MinusButton-Up:%d:%d:2:0|t'):format(tth, tth)
 
+local HORDE_ICON_STRING = ('|TInterface\\FriendsFrame\\PlusManz-Horde:13:13|t'):format(tth, tth)
+local ALLIANCE_ICON_STRING = ('|TInterface\\FriendsFrame\\PlusManz-Alliance:13:13|t'):format(tth, tth)
+local NEUTRAL_ICON_STRING = ('|TInterface\\FriendsFrame\\StatusIcon-Offline:13:13|t'):format(tth, tth)
+
 -- Couleurs
 local COLOR_RED = CreateColor(0.8, 0.1, 0.1, 1)
 local COLOR_GREEN = CreateColor(0.1, 0.8, 0.1, 1)
@@ -308,6 +312,25 @@ end
 
 local function InvertCharKey(charKey)
   return charKey:gsub('(%S+) %- (%S+)', '%2 - %1')
+end
+
+local function ClassColorise(class, targetstring)
+  if class then
+    local c = "|c" .. RAID_CLASS_COLORS[class].colorStr
+    return c .. targetstring .. FONT_COLOR_CODE_CLOSE
+  else
+    return targetstring
+  end
+end
+
+local function GetFactionIcon(faction)
+  if faction == "Horde" then
+    return HORDE_ICON_STRING
+  elseif faction == "Alliance" then
+    return ALLIANCE_ICON_STRING
+  else
+    return NEUTRAL_ICON_STRING
+  end
 end
 
 -------------------------------------------------------------------------------
@@ -610,7 +633,7 @@ function addon:ShowCharTooltip(charLineFrame, selectedCharKey)
   -- Affiche les données du personnage
   local char = self.sv.char[selectedCharKey]
   stt:AddLine();
-  stt:SetCell(1, 1, selectedCharKey, 2)
+  stt:SetCell(1, 1, GetFactionIcon(char.faction) .. ClassColorise(char.class, selectedCharKey), 2)
   stt:AddLine();
   stt:SetCell(2, 1, L['RECORDED_SINCE']:format(date(L['DATE_FORMAT'], char.since)), 2)
   stt:AddLine();
@@ -692,7 +715,7 @@ function addon:UpdateMainTooltip()
   ---------------------------------------------------------------------------
   -- 2/ Le personnage courant
   ---------------------------------------------------------------------------
-  mtt:AddLine(currentCharKey, GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
+  mtt:AddLine(GetFactionIcon(self.db.char.faction) .. ClassColorise(self.db.char.class, currentCharKey), GetAbsoluteMoneyString(self.db.char.money, showSilverAndCopper))
   ln = mtt:AddLine();
   mtt:SetCell(ln, 1, L['Current Session'], GameTooltipTextSmall, 1, 20);
   mtt:SetCell(ln, 2, GetRelativeMoneyString(self.db.char.session, showSilverAndCopper), GameTooltipTextSmall)
@@ -758,7 +781,7 @@ function addon:UpdateMainTooltip()
 
         -- Ajoute le personnage
         ln = mtt:AddLine()
-        mtt:SetCell(ln, 1, name, 1, 20)
+        mtt:SetCell(ln, 1, GetFactionIcon(chars[key].faction) .. ClassColorise(chars[key].class, name), 1, 20)
         mtt:SetCell(ln, 2, GetAbsoluteMoneyString(chars[key].money or 0, showSilverAndCopper))
         mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, key)
         mtt:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveChar)
@@ -987,12 +1010,14 @@ function addon:PLAYER_MONEY(evt)
     self.db.char[stat] = self.db.char[stat] + diff
   end
   self.db.char.lastSaved = time()
+  _, self.db.char.class = UnitClass("player")
+  self.db.char.faction = UnitFactionGroup("player")
 
   -- Met à jour la richesse du royaume
   realmsWealths[currentRealm] = (realmsWealths[currentRealm] or 0) + diff
 
   -- Met à jour le texte du LDB
-  self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
+  self.dataObject.text = GetRelativeMoneyString(self.db.char.session, self.opts.ldb.showSilverAndCopper)
 end
 
 -------------------------------------------------------------------------------

@@ -36,6 +36,7 @@ L['OPTS_HIGHLIGHT_LDB_DESC'] = "For those LDB displays that don't do it themselv
 L['OPTS_SMALL_PARTS'] = 'Show Copper and Silver'
 L['OPTS_SMALL_PARTS_DESC'] = 'These will be shown anyway if the gold part is zero.'
 L['OPTS_HIDE_MINIMAP_BUTTON'] = 'Hide Minimap Button'
+L['OPTS_TEXT_LDB'] = 'Displayed Text'
 
 L['OPTIONS_MENU'] = 'Dropdown Menu'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Disable in combat'

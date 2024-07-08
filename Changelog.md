@@ -1,4 +1,7 @@
 ## Change Log
+- Version 2.2.5 - 2024/07/08
+  - Dropdown selector to choose LDB text
+  - Add more locales (AI generated): Italian, Korean, Portuguese, Russian and Chinese
 - Version 2.2.4 - 2024/06/27
   - TOC update for 11.0.0
   - Update Ace3 to r1341

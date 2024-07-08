@@ -34,6 +34,7 @@ L['OPTS_DISABLE_IN_COMBAT'] = 'Im Kampf deaktivieren'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Verhindert dass das Menu im Kampf gezeigt wird.'
 L['Show Details'] = 'Details anzeigen'
 L['OPTS_SHOW_DETAILS_DESC'] = 'Zeige ein zweites Tooltip mit mehr Infos wenn der Mauszeiger über Realms und Charakteren hovert.'
+L['OPTS_TEXT_LDB'] = 'Angezeigter Text'
 
 L['Characters'] = 'Charaktere'
 L['OPTS_CHARACTERS_INFO_1'] = 'Wähle einen oder mehrer Charakter in der folgenden Liste, wähle anschliessen eine Aktion die mit diesen ausgeführt werden sollen:'

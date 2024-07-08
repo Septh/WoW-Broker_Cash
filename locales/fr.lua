@@ -36,6 +36,7 @@ L['OPTS_HIGHLIGHT_LDB_DESC'] = "Si votre addon ne le fait pas de lui-même."
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
 L['OPTS_HIDE_MINIMAP_BUTTON'] = "Masquer l'icône de la minimap"
+L['OPTS_TEXT_LDB'] = 'Texte affiché'
 
 L['OPTIONS_MENU'] = 'Menu déroulant'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'

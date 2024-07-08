@@ -34,6 +34,7 @@ L['OPTIONS_LDB'] = 'Mostrar LDB'
 L['OPTS_SMALL_PARTS'] = 'Mostrar cobre y plata'
 L['OPTS_SMALL_PARTS_DESC'] = 'Esto se mostrará de todos modos si el oro es cero.'
 L['OPTS_HIDE_MINIMAP_BUTTON'] = 'Ocultar el botón del minimapa'
+L['OPTS_TEXT_LDB'] = 'Texto mostrado'
 
 L['OPTIONS_MENU'] = 'Menu desplegable'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Deshabilitar en combate'

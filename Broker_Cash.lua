@@ -60,7 +60,8 @@ local sv_defaults = {
     },
     ldb = {
       showSilverAndCopper = true,
-      highlight = false -- v2.1.6
+      highlight = false, -- v2.1.6
+      displayedText = 'CASH' -- v2.2.5
     },
     menu = {
       disableInCombat = true,
@@ -161,6 +162,19 @@ local options_panel = {
                 else
                   LibDBIcon:Show(addonName)
                 end
+              end
+            },
+            displayedText = {
+              type = "select",
+              name = L["OPTS_TEXT_LDB"],
+              values = {
+                ["CASH"] = L['Cash'],
+                ["SESSION"] = L['Current Session']
+              },
+              order = 4,
+              set = function(info, value)
+                addon.db.global.ldb.displayedText = value
+                addon:SetLDBText()
               end
             }
           }
@@ -1017,7 +1031,15 @@ function addon:PLAYER_MONEY(evt)
   realmsWealths[currentRealm] = (realmsWealths[currentRealm] or 0) + diff
 
   -- Met à jour le texte du LDB
-  self.dataObject.text = GetRelativeMoneyString(self.db.char.session, self.opts.ldb.showSilverAndCopper)
+  self:SetLDBText()
+end
+
+function addon:SetLDBText()
+  if self.opts.ldb.displayedText == 'SESSION' then
+    self.dataObject.text = GetRelativeMoneyString(self.db.char.session, self.opts.ldb.showSilverAndCopper)
+  else
+    self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
+  end
 end
 
 -------------------------------------------------------------------------------

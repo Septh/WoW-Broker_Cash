@@ -1,6 +1,6 @@
 ## Title: Broker_Cash
 ## Author: Septh
-## Version: 2.2.4
+## Version: 2.2.5
 ## Interface: 100207, 110000
 ## X-Curse-Project-ID: 102836
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
@@ -11,6 +11,11 @@
 ## Notes-frFR: Suivez le solde de votre or sur l'ensemble de vos personnages.
 ## Notes-esES: Controla tu saldo de oro en todos tus personajes.
 ## Notes-deDE: Behalten Sie den Überblick über Ihr Goldguthaben für alle Ihre Charaktere.
+## Notes-itIT: Tieni traccia del tuo saldo d'oro su tutti i tuoi personaggi.
+## Notes-koKR: 모든 캐릭터의 골드 잔액을 추적하세요.
+## Notes-ptBR: Acompanhe o saldo de ouro em todos os seus personagens.
+## Notes-ruRU: Отслеживайте баланс золота на всех ваших персонажах.
+## Notes-zhCN: 追踪所有角色的金币余额。
 
 # Libraries
 libs\LibStub\LibStub.lua
@@ -28,8 +33,16 @@ libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\LibQTip-1.0\LibQTip-1.0.lua
 libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
+# Locales
 locales\en.lua
 locales\fr.lua
 locales\es.lua
 locales\de.lua
+locales\it.lua
+locales\ko.lua
+locales\pt.lua
+locales\ru.lua
+locales\zh.lua
+
+# Main
 Broker_Cash.lua

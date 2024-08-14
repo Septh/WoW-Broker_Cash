@@ -7,7 +7,7 @@ local time, difftime = time, difftime
 local wipe = wipe
 
 -- API
-local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
+local GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown = C_AddOns.GetAddOnMetadata, UnitName, GetRealmName, InCombatLockdown
 local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
 local CreateColor, CopyTable, tDeleteItem, SecondsToTime = CreateColor, CopyTable, tDeleteItem, SecondsToTime
 local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall

@@ -1,4 +1,9 @@
 ## Change Log
+- Version 2.2.6 - 2024/08/14
+  - TOC update for 11.0.2
+  - Update Ace3 to r1349
+  - Update LibDBIcon to 11.0.0
+  - Fix GetAddOnMetadata error
 - Version 2.2.5 - 2024/07/08
   - Dropdown selector to choose LDB text
   - Add more locales (AI generated): Italian, Korean, Portuguese, Russian and Chinese

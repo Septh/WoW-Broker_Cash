@@ -364,9 +364,12 @@ local function GetAbsoluteMoneyString(amount, showSilverAndCopper)
   if gold > 0 then
     tbl[#tbl + 1] = BreakUpLargeNumbers(gold) .. GOLD_ICON_STRING
   end
-  if showSilverAndCopper or (gold == 0) then
-    fmt = (gold == 0) and '%d%s' or '%02d%s'
-    tbl[#tbl + 1] = fmt:format(silver, SILVER_ICON_STRING)
+  local noGold = gold == 0
+  if showSilverAndCopper or noGold then
+    if silver > 0 or not noGold then
+      fmt = noGold and '%d%s' or '%02d%s'
+      tbl[#tbl + 1] = fmt:format(silver, SILVER_ICON_STRING)
+    end
     fmt = (gold + silver == 0) and '%d%s' or '%02d%s'
     tbl[#tbl + 1] = fmt:format(copper, COPPER_ICON_STRING)
   end
@@ -753,7 +756,11 @@ function addon:UpdateMainTooltip()
   -- Sort realms in descending order of wealth
   -- (done here because the order can change at any time depending on the current character)
   table.sort(sortedRealms, function(r1, r2)
-    return realmsWealths[r1] > realmsWealths[r2]
+    if realmsWealths[r1] == realmsWealths[r2] then
+      return r1 < r2
+    else
+      return realmsWealths[r1] > realmsWealths[r2]
+    end
   end)
 
   -- Add all the characters, realm by realm

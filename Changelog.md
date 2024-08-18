@@ -1,4 +1,10 @@
 ## Change Log
+- Version 2.2.7 - 2024/08/19
+  - Translate comments to english
+  - Add Warband Bank
+  - Move Token value to global
+  - Remove Guild Bank code
+  - Store connected realms data (not used yet)
 - Version 2.2.6 - 2024/08/14
   - TOC update for 11.0.2
   - Update Ace3 to r1349

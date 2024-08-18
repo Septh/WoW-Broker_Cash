@@ -63,3 +63,4 @@ L['Are you sure?'] = 'Вы уверены?'
 
 L['WoW Token'] = 'Жетон WoW'
 L['Guild Bank'] = 'Банк гильдии'
+L['Warband Bank'] = 'банка отряда'

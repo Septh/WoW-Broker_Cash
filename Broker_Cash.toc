@@ -1,6 +1,6 @@
 ## Title: Broker_Cash
 ## Author: Septh
-## Version: 2.2.6
+## Version: 2.2.7
 ## Interface: 110002
 ## X-Curse-Project-ID: 102836
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3

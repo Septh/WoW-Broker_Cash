@@ -7,7 +7,8 @@ local time, difftime = time, difftime
 local wipe = wipe
 
 -- API
-local GetAddOnMetadata, UnitName, UnitGUID, GetRealmName, InCombatLockdown = C_AddOns.GetAddOnMetadata, UnitName, UnitGUID, GetRealmName, InCombatLockdown
+local GetAddOnMetadata, InCombatLockdown = C_AddOns.GetAddOnMetadata, InCombatLockdown
+local UnitName, UnitGUID, GetRealmName, GetRealmID = UnitName, UnitGUID, GetRealmName, GetRealmID
 local GetMoney, BreakUpLargeNumbers = GetMoney, BreakUpLargeNumbers
 local CreateColor, CopyTable, tDeleteItem, SecondsToTime = CreateColor, CopyTable, tDeleteItem, SecondsToTime
 local UIParent, GameTooltipText, GameTooltipTextSmall = UIParent, GameTooltipText, GameTooltipTextSmall
@@ -52,6 +53,7 @@ local currentRealm = GetRealmName()
 local currentCharKey = currentChar .. ' - ' .. currentRealm
 local currentCharGUID = UnitGUID('player')
 local serverID = select(2, strsplit('-', currentCharGUID))
+local realmID = GetRealmID()
 serverID = tonumber(serverID)
 local sortedRealms, sortedChars, realmsWealths = {}, {}, {}
 
@@ -258,19 +260,6 @@ local options_panel = {
             }
           }
         },
-        -- sep1 = {
-        --     type  = 'header',
-        --     name  = '',
-        --     order = 2
-        -- },
-        --
-        -- Characters are inserted here later
-        --
-        -- sep2 = {
-        --     type  = 'header',
-        --     name  = '',
-        --     order = 99,
-        -- },
         actions = {
           type = 'group',
           name = function()
@@ -761,10 +750,6 @@ function addon:UpdateMainTooltip()
   -- 3/ All the characters, grouped by realm
   ---------------------------------------------------------------------------
 
-  -- for realm in pairs(self.db.global.serverID[serverID]) do
-  --   print(realm)
-  -- end
-
   -- Sort realms in descending order of wealth
   -- (done here because the order can change at any time depending on the current character)
   table.sort(sortedRealms, function(r1, r2)
@@ -1196,7 +1181,7 @@ function addon:OnInitialize()
 
   -- Build connected realms table
   self.opts.serverID[serverID] = self.opts.serverID[serverID] or {}
-  self.opts.serverID[serverID][currentRealm] = true
+  self.opts.serverID[serverID][currentRealm] = realmID
 
   -- Defers end of initialisation to PLAYER_ENTERING_WORLD
   self:RegisterEvent('PLAYER_ENTERING_WORLD')

@@ -350,6 +350,17 @@ local function GetFactionIcon(faction)
   end
 end
 
+local function SkinFrame(frame)
+  if C_AddOns.IsAddOnLoaded("ElvUI") or C_AddOns.IsAddOnLoaded("Tukui") then
+    if frame.StripTextures then
+      frame:StripTextures()
+    end
+    if frame.CreateBackdrop then
+      frame:CreateBackdrop("Transparent")
+    end
+  end
+end
+
 -------------------------------------------------------------------------------
 if GetLocale() == 'frFR' then
   -- Fix a bug in French GlobalStrings.lua
@@ -590,6 +601,7 @@ function addon:PrepareSubTooltip(mainTooltipLine)
   if not subTooltip then
     subTooltip = libQTip:Acquire(addonName .. '_SubTooltip', 2, 'LEFT', 'RIGHT')
     subTooltip:SetFrameLevel(mainTooltipLine:GetFrameLevel() + 1)
+    SkinFrame(subTooltip)
   end
 
   -- Define the position of the tooltip (to the left of the parent line if there isn't enough space on the right)
@@ -791,6 +803,7 @@ function addon:UpdateMainTooltip()
       end
 
       -- 1/ Realm name + number of characters + wealth of realm
+      mtt:AddLine('')
       rln = mtt:AddLine()
       mtt:SetCell(rln, 1, ('%s %s (%d)'):format(unfolded and MINUS_BUTTON_STRING or PLUS_BUTTON_STRING, realm, wealthyCharsCount))
       mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney, showSilverAndCopper))
@@ -821,7 +834,6 @@ function addon:UpdateMainTooltip()
             mtt:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveChar)
           end
         end
-        mtt:AddLine('')
       end
     end
   end
@@ -911,6 +923,8 @@ function addon:ShowMainTooltip(LDBFrame)
     mainTooltip:SetAutoHideDelay(0.1, LDBFrame, function()
       addon:HideMainTooltip()
     end)
+
+    SkinFrame(mainTooltip)
 
     -- Highlight the LDB icon
     if self.opts.ldb.highlight then

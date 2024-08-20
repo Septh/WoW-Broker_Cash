@@ -1,4 +1,7 @@
 ## Change Log
+- Version 2.2.8 - 2024/08/20
+  - Add Warband internal balance (fix total balance calculation)
+  - Hide characters and realms if cashless
 - Version 2.2.7 - 2024/08/19
   - Translate comments to english
   - Add Warband Bank

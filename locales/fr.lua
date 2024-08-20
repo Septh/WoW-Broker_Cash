@@ -62,5 +62,4 @@ L['DELETE_TOONS'] = 'Êtes-vous sûr de vouloir\nsupprimer ces %d personnages ?'
 L['Are you sure?'] = 'Êtes-vous sûr ?'
 
 L['WoW Token'] = 'Jeton WoW'
-L['Guild Bank'] = 'Banque de guilde'
 L['Warband Bank'] = 'Banque de bataillon'

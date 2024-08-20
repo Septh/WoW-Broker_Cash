@@ -78,7 +78,13 @@ local sv_defaults = {
     },
     account = { -- v2.2.7
       token = 0,
-      money = 0
+      lastSaved = 0,
+      money = 0,
+      day = 0,
+      week = 0,
+      month = 0,
+      year = 0,
+      ever = 0
     },
     serverID = {}
   },
@@ -764,44 +770,59 @@ function addon:UpdateMainTooltip()
   end)
 
   -- Add all the characters, realm by realm
+  local chars = self.sv.char
   local totalMoney = 0
+
   for _, realm in ipairs(sortedRealms) do
     local unfolded, realmMoney = unfoldedRealms[realm], realmsWealths[realm]
 
-    -- Calculates total wealth
-    totalMoney = totalMoney + realmMoney
+    -- Display realm if wealthy
+    if realmMoney > 0 then
 
-    -- 1/ Realm name + number of characters + wealth of realm
-    rln = mtt:AddLine()
-    mtt:SetCell(rln, 1, ('%s %s (%d)'):format(unfolded and MINUS_BUTTON_STRING or PLUS_BUTTON_STRING, realm, #sortedChars[realm]))
-    mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney, showSilverAndCopper))
-    mtt:SetLineTextColor(rln, COLOR_YELLOW:GetRGBA())
-    mtt:SetLineScript(rln, 'OnEnter', MainTooltip_OnEnterRealm, realm)
-    mtt:SetLineScript(rln, 'OnLeave', MainTooltip_OnLeaveRealm)
-    mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
+      -- Calculates total wealth
+      totalMoney = totalMoney + realmMoney
 
-    -- 2/ All the characters in this realm
-    if unfolded then
-      local chars = self.sv.char
-
-      -- Sorts the realm's characters in descending order of wealth
-      -- (done here because the order can change at any time depending on the current character)
-      table.sort(sortedChars[realm], function(n1, n2)
-        n1, n2 = MakeCharKey(n1, realm), MakeCharKey(n2, realm)
-        return ((chars[n1].money) or 0) > ((chars[n2].money) or 0)
-      end)
-
+      local wealthyCharsCount = 0
       for _, name in ipairs(sortedChars[realm]) do
         local key = MakeCharKey(name, realm)
-
-        -- Add the character
-        ln = mtt:AddLine()
-        mtt:SetCell(ln, 1, GetFactionIcon(chars[key].faction) .. ClassColorise(chars[key].class, name), 1, 20)
-        mtt:SetCell(ln, 2, GetAbsoluteMoneyString(chars[key].money or 0, showSilverAndCopper))
-        mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, key)
-        mtt:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveChar)
+        if (chars[key].money or 0) > 0 then
+          wealthyCharsCount = wealthyCharsCount + 1
+        end
       end
-      mtt:AddLine('')
+
+      -- 1/ Realm name + number of characters + wealth of realm
+      rln = mtt:AddLine()
+      mtt:SetCell(rln, 1, ('%s %s (%d)'):format(unfolded and MINUS_BUTTON_STRING or PLUS_BUTTON_STRING, realm, wealthyCharsCount))
+      mtt:SetCell(rln, 2, GetAbsoluteMoneyString(realmMoney, showSilverAndCopper))
+      mtt:SetLineTextColor(rln, COLOR_YELLOW:GetRGBA())
+      mtt:SetLineScript(rln, 'OnEnter', MainTooltip_OnEnterRealm, realm)
+      mtt:SetLineScript(rln, 'OnLeave', MainTooltip_OnLeaveRealm)
+      mtt:SetLineScript(rln, 'OnMouseDown', MainTooltip_OnClickRealm, realm)
+
+      -- 2/ All the characters in this realm
+      if unfolded then
+
+        -- Sorts the realm's characters in descending order of wealth
+        -- (done here because the order can change at any time depending on the current character)
+        table.sort(sortedChars[realm], function(n1, n2)
+          n1, n2 = MakeCharKey(n1, realm), MakeCharKey(n2, realm)
+          return ((chars[n1].money) or 0) > ((chars[n2].money) or 0)
+        end)
+
+        for _, name in ipairs(sortedChars[realm]) do
+          local key = MakeCharKey(name, realm)
+
+          -- Add the character if wealthy
+          if (chars[key].money or 0) > 0 then
+            ln = mtt:AddLine()
+            mtt:SetCell(ln, 1, GetFactionIcon(chars[key].faction) .. ClassColorise(chars[key].class, name), 1, 20)
+            mtt:SetCell(ln, 2, GetAbsoluteMoneyString(chars[key].money or 0, showSilverAndCopper))
+            mtt:SetLineScript(ln, 'OnEnter', MainTooltip_OnEnterChar, key)
+            mtt:SetLineScript(ln, 'OnLeave', MainTooltip_OnLeaveChar)
+          end
+        end
+        mtt:AddLine('')
+      end
     end
   end
   -- Add Warband bank money
@@ -829,6 +850,8 @@ function addon:UpdateMainTooltip()
     year = 0,
     ever = 0
   }
+
+  -- Each character
   for _, char in pairs(self.sv.char) do
     totalBalance.day = totalBalance.day + (char.day or 0)
     totalBalance.week = totalBalance.week + (char.week or 0)
@@ -836,6 +859,14 @@ function addon:UpdateMainTooltip()
     totalBalance.year = totalBalance.year + (char.year or 0)
     totalBalance.ever = totalBalance.ever + (char.ever or 0)
   end
+
+  -- Warband
+  local account = self.db.global.account
+  totalBalance.day = totalBalance.day + (account.day or 0)
+  totalBalance.week = totalBalance.week + (account.week or 0)
+  totalBalance.month = totalBalance.month + (account.month or 0)
+  totalBalance.year = totalBalance.year + (account.year or 0)
+  totalBalance.ever = totalBalance.ever + (account.ever or 0)
 
   -- Rendering the total
   mtt:AddLine('')
@@ -986,6 +1017,8 @@ function addon:CheckStatsResets()
   ---------------------------------------------------------------------------
   -- 2/ Reset outdated stats
   ---------------------------------------------------------------------------
+
+  -- For each character
   for key, char in pairs(self.sv.char) do
     local lastSaved, resetValue = char.lastSaved or 0, key == currentCharKey and 0 or nil
 
@@ -1003,6 +1036,25 @@ function addon:CheckStatsResets()
     end
     if char.token then
       char.token = nil
+    end
+  end
+
+  -- For Warband
+  do
+    local account = self.db.global.account
+    local lastSaved = account.lastSaved or 0
+
+    if lastSaved < startOfDay then
+      account.day = 0
+    end
+    if lastSaved < startOfWeek then
+      account.week = 0
+    end
+    if lastSaved < startOfMonth then
+      account.month = 0
+    end
+    if lastSaved < startOfYear then
+      account.year = 0
     end
   end
 
@@ -1049,14 +1101,24 @@ function addon:PLAYER_MONEY(evt)
   self:SetLDBText()
 end
 
+-------------------------------------------------------------------------------
+-- Warband stats management
+-------------------------------------------------------------------------------
 function addon:ACCOUNT_MONEY(evt)
-  local money = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
 
-  if (money) then
-    self.db.global.account.money = money
+  -- Calculate gold gain/loss
+  local diff = C_Bank.FetchDepositedMoney(Enum.BankType.Account) - self.db.global.account.money
+
+  -- Update stats
+  for _, stat in ipairs({'money', 'day', 'week', 'month', 'year', 'ever'}) do
+    self.db.global.account[stat] = self.db.global.account[stat] + diff
   end
+  self.db.global.account.lastSaved = time()
 end
 
+-------------------------------------------------------------------------------
+-- Management 
+-------------------------------------------------------------------------------
 function addon:SetLDBText()
   if self.opts.ldb.displayedText == 'SESSION' then
     self.dataObject.text = GetRelativeMoneyString(self.db.char.session, self.opts.ldb.showSilverAndCopper)
@@ -1064,10 +1126,6 @@ function addon:SetLDBText()
     self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
   end
 end
-
--------------------------------------------------------------------------------
--- Management 
--------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
 -- Initialization

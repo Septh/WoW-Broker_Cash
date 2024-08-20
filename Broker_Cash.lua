@@ -1161,6 +1161,7 @@ function addon:DeferredStart()
 
   -- Save the current gold amount
   self:PLAYER_MONEY()
+  self:ACCOUNT_MONEY()
 
   -- Listen to events
   self:RegisterEvent('PLAYER_MONEY')

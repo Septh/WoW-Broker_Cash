@@ -1,5 +1,5 @@
 ## Change Log
-- Next
+- Version 2.2.9 - Next
   - Add ElvUI/Tukui skin support
 - Version 2.2.8 - 2024/08/20
   - Add Warband internal balance (fix total balance calculation)

@@ -429,6 +429,9 @@ function addon:OptionsPanel_DoDeleteCharacters(info, value)
     end
   end
 
+  -- Reset Warband bank
+  addon:DoResetWarbandBank()
+
   -- Deselect all characters
   numSelectedToons = #wipe(selectedToons)
 
@@ -464,11 +467,25 @@ function addon:OptionsPanel_DoResetCharacters(info, value)
     chars[key].ever = nil
   end
 
+  -- Reset Warband bank
+  addon:DoResetWarbandBank()
+
   -- Deselect all characters
   numSelectedToons = #wipe(selectedToons)
 
   -- Recalculating the wealth of realms
   self:AuditRealms()
+end
+
+-- Reset Warband bank
+function addon:DoResetWarbandBank()
+  local account = self.db.global.account
+  account.money = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
+  account.day = 0
+  account.week = 0
+  account.month = 0
+  account.year = 0
+  account.ever = 0
 end
 
 -- Display a confirmation request before resetting/deleting

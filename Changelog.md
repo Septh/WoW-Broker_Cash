@@ -1,6 +1,8 @@
 ## Change Log
 - Version 2.2.9 - Next
   - Add ElvUI/Tukui skin support
+  - TOC update for 11.2
+  - Add LDB Cash and Today Balance for both Character and Account
 - Version 2.2.8 - 2024/08/20
   - Add Warband internal balance (fix total balance calculation)
   - Hide characters and realms if cashless

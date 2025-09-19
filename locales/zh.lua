@@ -63,3 +63,8 @@ L['Are you sure?'] = '你确定吗？'
 
 L['WoW Token'] = '魔兽世界时光徽章'
 L['Warband Bank'] = '战团银行'
+
+L['Character: Cash'] = "角色：现金"
+L['Account: Cash'] = "账号：现金"
+L['Character: Today'] = "角色：今天"
+L['Account: Today'] = "账号：今天"

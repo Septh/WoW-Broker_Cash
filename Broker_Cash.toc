@@ -1,7 +1,7 @@
 ## Title: Broker_Cash
 ## Author: Septh
 ## Version: 2.2.9
-## Interface: 110002
+## Interface: 110205, 110107, 110200
 ## X-Curse-Project-ID: 102836
 ## OptionalDeps: !Swatter, !BugGrabber, Ace3
 ## SavedVariables: Broker_CashDB

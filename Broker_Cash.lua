@@ -184,8 +184,10 @@ local options_panel = {
               type = "select",
               name = L["OPTS_TEXT_LDB"],
               values = {
-                ["CASH"] = L['Cash'],
-                ["SESSION"] = L['Current Session']
+                ["CASH"] = L['Character: Cash'],
+                ["ACCOUNT"] = L['Account: Cash'],
+                ["CHARACTER_TODAY"] = L['Character: Today'],
+                ["ACCOUNT_TODAY"] = L['Account: Today'],
               },
               order = 4,
               set = function(info, value)
@@ -545,7 +547,7 @@ function addon:OptionsPanel_SetOpt(info, value)
 
   -- Update the LDB text where necessary
   if info[#info - 1] == 'ldb' then
-    self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
+    self:SetLDBText()
   end
 end
 
@@ -1151,8 +1153,22 @@ end
 -- Management 
 -------------------------------------------------------------------------------
 function addon:SetLDBText()
-  if self.opts.ldb.displayedText == 'SESSION' then
-    self.dataObject.text = GetRelativeMoneyString(self.db.char.session, self.opts.ldb.showSilverAndCopper)
+  if self.opts.ldb.displayedText == 'CHARACTER_TODAY' then
+    self.dataObject.text = GetRelativeMoneyString(self.db.char.day, self.opts.ldb.showSilverAndCopper)
+  elseif self.opts.ldb.displayedText == 'ACCOUNT_TODAY' then
+    local balance = 0
+    for _, char in pairs(self.sv.char) do
+      balance = balance + (char.day or 0)
+    end
+    balance = balance + (self.db.global.account.day or 0)
+    self.dataObject.text = GetRelativeMoneyString(balance, self.opts.ldb.showSilverAndCopper)
+  elseif self.opts.ldb.displayedText == 'ACCOUNT' then
+    local money = 0
+    for _, char in pairs(self.sv.char) do
+      money = money + (char.money or 0)
+    end
+    money = money + (self.db.global.account.money or 0)
+    self.dataObject.text = GetAbsoluteMoneyString(money, self.opts.ldb.showSilverAndCopper)
   else
     self.dataObject.text = GetAbsoluteMoneyString(self.db.char.money, self.opts.ldb.showSilverAndCopper)
   end

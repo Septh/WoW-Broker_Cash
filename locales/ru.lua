@@ -63,3 +63,8 @@ L['Are you sure?'] = 'Вы уверены?'
 
 L['WoW Token'] = 'Жетон WoW'
 L['Warband Bank'] = 'банка отряда'
+
+L['Character: Cash'] = "Персонаж: Наличные"
+L['Account: Cash'] = "Аккаунт: Наличные"
+L['Character: Today'] = "Персонаж: Сегодня"
+L['Account: Today'] = "Аккаунт: Сегодня"

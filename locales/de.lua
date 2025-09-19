@@ -55,3 +55,8 @@ L['Are you sure?'] = 'Sind Sie sicher?'
 
 L['WoW Token'] = 'WoW-Marke'
 L['Warband Bank'] = 'Kriegsmeutenbank'
+
+L['Character: Cash'] = "Charakter: Bargeld"
+L['Account: Cash'] = "Konto: Bargeld"
+L['Character: Today'] = "Charakter: Heute"
+L['Account: Today'] = "Konto: Heute"

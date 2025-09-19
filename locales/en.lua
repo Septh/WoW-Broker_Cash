@@ -63,3 +63,8 @@ L['Are you sure?'] = true
 
 L['WoW Token'] = true
 L['Warband Bank'] = true
+
+L['Character: Cash'] = true
+L['Account: Cash'] = true
+L['Character: Today'] = true
+L['Account: Today'] = true

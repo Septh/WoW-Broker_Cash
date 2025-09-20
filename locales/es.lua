@@ -31,6 +31,8 @@ L['OPTS_SESSION_THRESHOLD'] = 'Umbral de sesión'
 L['OPTS_SESSION_THRESHOLD_DESC'] = 'Si cierra sesión y luego vuelve a iniciar sesión con el mismo personaje antes de que haya transcurrido este número de segundos, la estadística de "sesión" no se restablecerá. Ver documentos para más información.'
 
 L['OPTIONS_LDB'] = 'Mostrar LDB'
+L['OPTS_HIGHLIGHT_LDB'] = 'Resaltar el icono LDB al pasar el ratón.'
+L['OPTS_HIGHLIGHT_LDB_DESC'] = 'Para aquellas pantallas LDB que no lo hacen por sí mismas.'
 L['OPTS_SMALL_PARTS'] = 'Mostrar cobre y plata'
 L['OPTS_SMALL_PARTS_DESC'] = 'Esto se mostrará de todos modos si el oro es cero.'
 L['OPTS_HIDE_MINIMAP_BUTTON'] = 'Ocultar el botón del minimapa'
@@ -44,8 +46,8 @@ L['OPTS_SHOW_DETAILS_DESC'] = 'Muestra una información emergente secundaria con
 
 L['Characters'] = 'Personajes'
 L['OPTS_CHARACTERS_INFO_1'] = 'Seleccione uno o más personajes de la lista a continuación, luego seleccione una acción para realizar en ellos:'
-L['OPTS_CHARACTERS_INFO_2'] = "Reiniciará las estadísticas de los personajes a 0 pero los mantendrá en la base de datos."
-L['OPTS_CHARACTERS_INFO_3'] = "Eliminará las estadísticas de los personajes de la base de datos. Tenga en cuenta que no puede eliminar el personaje actual."
+L['OPTS_CHARACTERS_INFO_2'] = 'Reiniciará las estadísticas de los personajes a 0 pero los mantendrá en la base de datos.'
+L['OPTS_CHARACTERS_INFO_3'] = 'Eliminará las estadísticas de los personajes de la base de datos. Tenga en cuenta que no puede eliminar el personaje actual.'
 L['OPTS_CHARACTERS_INFO_4'] = 'Aviso, estas acciones son irreversibles!'
 L['Reset'] = 'Reiniciar'
 L['Delete'] = 'Eliminar'
@@ -62,7 +64,7 @@ L['Are you sure?'] = '¿Está seguro?'
 L['WoW Token'] = 'Ficha de WoW'
 L['Warband Bank'] = 'Banco de la banda guerrera'
 
-L['Character: Cash'] = "Personaje: Efectivo"
-L['Account: Cash'] = "Cuenta: Efectivo"
-L['Character: Today'] = "Personaje: Hoy"
-L['Account: Today'] = "Cuenta: Hoy"
+L['Character: Cash'] = 'Personaje: Efectivo'
+L['Account: Cash'] = 'Cuenta: Efectivo'
+L['Character: Today'] = 'Personaje: Hoy'
+L['Account: Today'] = 'Cuenta: Hoy'

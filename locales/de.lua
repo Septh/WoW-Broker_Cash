@@ -7,9 +7,9 @@ if not L then
 end
 
 -- Main tooltip
-L['Name'] = true
-L['Cash'] = true
-L['Total'] = true
+L['Name'] = 'Name'
+L['Cash'] = 'Bargeld'
+L['Total'] = 'Gesamt'
 
 -- Sub tooltip
 L['RECORDED_SINCE'] = '> Aufgenommen seit %s'
@@ -25,21 +25,28 @@ L['Ever'] = 'Immer'
 
 -- Options panel
 L['Options'] = 'Optionen'
+
+L['OPTIONS_GENERAL'] = 'Allgemein'
+L['OPTS_SESSION_THRESHOLD'] = 'Sitzungsschwelle'
+L['OPTS_SESSION_THRESHOLD_DESC'] = 'Wenn du dich aus- und mit demselben Charakter wieder einloggst, bevor diese Anzahl von Sekunden verstrichen ist, wird die "Sitzung"-Statistik nicht zurückgesetzt. Siehe Dokumentation für weitere Informationen.'
 L['OPTIONS_LDB'] = 'LDB Anzeige'
+L['OPTS_HIGHLIGHT_LDB'] = 'Hebe das LDB-Symbol bei Mouseover hervor.'
+L['OPTS_HIGHLIGHT_LDB_DESC'] = 'Für LDB-Anzeigen, die es nicht selbst machen.'
 L['OPTS_SMALL_PARTS'] = 'Zeige Kupfer und Silber'
 L['OPTS_SMALL_PARTS_DESC'] = 'Diese werden trotzdem angezeigt wenn der Goldwert Null entspricht.'
 L['OPTS_HIDE_MINIMAP_BUTTON'] = 'Minimap-Schaltfläche ausblenden'
+L['OPTS_TEXT_LDB'] = 'Angezeigter Text'
+
 L['OPTIONS_MENU'] = 'Aufklappmenü'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Im Kampf deaktivieren'
 L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Verhindert dass das Menu im Kampf gezeigt wird.'
 L['Show Details'] = 'Details anzeigen'
 L['OPTS_SHOW_DETAILS_DESC'] = 'Zeige ein zweites Tooltip mit mehr Infos wenn der Mauszeiger über Realms und Charakteren hovert.'
-L['OPTS_TEXT_LDB'] = 'Angezeigter Text'
 
 L['Characters'] = 'Charaktere'
 L['OPTS_CHARACTERS_INFO_1'] = 'Wähle einen oder mehrer Charakter in der folgenden Liste, wähle anschliessen eine Aktion die mit diesen ausgeführt werden sollen:'
-L['OPTS_CHARACTERS_INFO_2'] = "setzt die Charakter-Statistik auf 0, behält diese aber in der Datenbank."
-L['OPTS_CHARACTERS_INFO_3'] = "Entfernt die Charakter-Statistik aus der Datenbank. Beachte dass du den aktuell ausgewählten Charakter nicht löschen kannst."
+L['OPTS_CHARACTERS_INFO_2'] = 'setzt die Charakter-Statistik auf 0, behält diese aber in der Datenbank.'
+L['OPTS_CHARACTERS_INFO_3'] = 'Entfernt die Charakter-Statistik aus der Datenbank. Beachte dass du den aktuell ausgewählten Charakter nicht löschen kannst.'
 L['OPTS_CHARACTERS_INFO_4'] = 'Achtung, diese Aktion kann nicht rückgängig gemacht werden!'
 L['Reset'] = 'Zurücksetzen'
 L['Delete'] = 'Löschen'
@@ -56,7 +63,7 @@ L['Are you sure?'] = 'Sind Sie sicher?'
 L['WoW Token'] = 'WoW-Marke'
 L['Warband Bank'] = 'Kriegsmeutenbank'
 
-L['Character: Cash'] = "Charakter: Bargeld"
-L['Account: Cash'] = "Konto: Bargeld"
-L['Character: Today'] = "Charakter: Heute"
-L['Account: Today'] = "Konto: Heute"
+L['Character: Cash'] = 'Charakter: Bargeld'
+L['Account: Cash'] = 'Konto: Bargeld'
+L['Character: Today'] = 'Charakter: Heute'
+L['Account: Today'] = 'Konto: Heute'

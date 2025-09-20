@@ -32,7 +32,7 @@ L['OPTS_SESSION_THRESHOLD_DESC'] = "Si vous déconnectez, puis reconnectez un pe
 
 L['OPTIONS_LDB'] = 'Icône LDB'
 L['OPTS_HIGHLIGHT_LDB'] = "Surligner l'icône au survol"
-L['OPTS_HIGHLIGHT_LDB_DESC'] = "Si votre addon ne le fait pas de lui-même."
+L['OPTS_HIGHLIGHT_LDB_DESC'] = 'Si votre addon ne le fait pas de lui-même.'
 L['OPTS_SMALL_PARTS'] = "Afficher l'argent et le bronze"
 L['OPTS_SMALL_PARTS_DESC'] = "Ces montants seront tout de même affichés si le montant d'or est égal à zéro."
 L['OPTS_HIDE_MINIMAP_BUTTON'] = "Masquer l'icône de la minimap"
@@ -40,7 +40,7 @@ L['OPTS_TEXT_LDB'] = 'Texte affiché'
 
 L['OPTIONS_MENU'] = 'Menu déroulant'
 L['OPTS_DISABLE_IN_COMBAT'] = 'Ne pas afficher en combat'
-L['OPTS_DISABLE_IN_COMBAT_DESC'] = "Evite de vous perturber pendant le combat..."
+L['OPTS_DISABLE_IN_COMBAT_DESC'] = 'Evite de vous perturber pendant le combat...'
 L['Show Details'] = 'Détails des royaumes et des personnages'
 L['OPTS_SHOW_DETAILS_DESC'] = 'Afficher le second tooltip pour les royaumes et les personnages.'
 
@@ -64,7 +64,7 @@ L['Are you sure?'] = 'Êtes-vous sûr ?'
 L['WoW Token'] = 'Jeton WoW'
 L['Warband Bank'] = 'Banque de bataillon'
 
-L['Character: Cash'] = "Personnage : Argent"
-L['Account: Cash'] = "Compte : Argent"
+L['Character: Cash'] = 'Personnage : Argent'
+L['Account: Cash'] = 'Compte : Argent'
 L['Character: Today'] = "Personnage : Aujourd'hui"
 L['Account: Today'] = "Compte : Aujourd'hui"

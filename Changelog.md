@@ -1,5 +1,8 @@
 ## Change Log
-- Version 2.2.9 - Next
+- Version 2.3.0 - 2026/02/03
+  - TOC update for 12.0
+  - Update Ace3 to r1377
+- Version 2.2.9 - 2025/09/20
   - Add ElvUI/Tukui skin support
   - TOC update for 11.2
   - Add LDB Cash and Today Balance for both Character and Account

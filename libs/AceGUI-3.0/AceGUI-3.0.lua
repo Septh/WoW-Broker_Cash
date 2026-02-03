@@ -870,7 +870,7 @@ AceGUI:RegisterLayout("Table",
 		local t, laneH, laneV, rowspans, rowStart, colStart = unpack(layoutCache)
 
 		-- Create the grid
-		local n, slotFound = 0
+		local n, slotFound = 0, 0
 		for i,child in ipairs(children) do
 			if child:IsShown() then
 				repeat
